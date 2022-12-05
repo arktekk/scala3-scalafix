@@ -7,21 +7,21 @@ import io.circe.generic.semiauto.*
 object Circescala3 {
 
   case class DeriveEncoderWithTypes(name: String, age: Int) derives Encoder.AsObject
-  object DeriveEncoderWithTypes {
-    
-  }
+  
 
   case class DeriveEncoder(name: String, age: Int) derives Encoder.AsObject
-  object DeriveEncoder {
+  
+
+  case class DeriveEncoderAndKeepCompanion(name: String, age: Int) derives Encoder.AsObject
+  object DeriveEncoderAndKeepCompanion {
+    val i: Int = 1
     
   }
-
+  
   case class DoNotChange(name: String)
 
   case class CaseClassWithExistingDerived(name: String) derives Decoder, Encoder.AsObject
-  object CaseClassWithExistingDerived {
-    
-  }
+  
 
   case class CaseClassWithEncodedNotDerived(name: String)
   object CaseClassWithEncodedNotDerived {

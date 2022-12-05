@@ -19,6 +19,12 @@ object Circescala3 {
     implicit val encoder: Encoder.AsObject[DeriveEncoder] = deriveEncoder
   }
 
+  case class DeriveEncoderAndKeepCompanion(name: String, age: Int)
+  object DeriveEncoderAndKeepCompanion {
+    val i: Int = 1
+    implicit val encoder: Encoder.AsObject[DeriveEncoderAndKeepCompanion] = deriveEncoder
+  }
+  
   case class DoNotChange(name: String)
 
   case class CaseClassWithExistingDerived(name: String) derives Decoder

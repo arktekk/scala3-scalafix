@@ -20,18 +20,27 @@ class Circescala3 extends SemanticRule("Circescala3") {
       Circescala3.Config("io.circe.Codec", "Codec.AsObject")
     ).map(c => c.typ -> c).toMap
 
-    doc.tree.collect { case CaseClassWithCompanion(c, SemiAutoDerived(items)) =>
+    doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
       items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
         case Nil => Patch.empty
         case toRewrite =>
-          val base = if (c.templ. derives.isEmpty) " derives " else ", "
-          val derivePatch = Patch.addRight(c, base ++ toRewrite.map(_._2.derived).mkString(", "))
-          val removeImplicitPatches = Patch.removeTokens(toRewrite.flatMap(_._1.defnVal.tokens))
-          derivePatch + removeImplicitPatches
+          val base = if (caseClass.templ. derives.isEmpty) " derives " else ", "
+          val derivePatch = Patch.addRight(caseClass, base ++ toRewrite.map(_._2.derived).mkString(", "))
+          val removePatch =
+            if (childrenInCompanion(companion) == toRewrite.size) Patch.removeTokens(companion.tokens)
+            else Patch.removeTokens(toRewrite.flatMap(_._1.defnVal.tokens))
+
+          derivePatch + removePatch
       }
     }.asPatch
   }
 
+  private def childrenInCompanion(companion: Defn.Object): Int = {
+    companion.templ.children.count {
+      case Self(Name.Anonymous(), None) => false
+      case _                            => true
+    }
+  }
 }
 
 object Circescala3 {
@@ -46,7 +55,6 @@ object CaseClassWithCompanion {
   def unapply(t: Tree): Option[(Defn.Class, Defn.Object)] =
     t match {
       case c @ Defn.Class(mods, cName, _, _, _) if isCaseClass(mods) =>
-        println(c.structure)
         c.parent.flatMap { st =>
           st.children.collectFirst {
             case o @ Defn.Object(_, oName, _) if cName.value == oName.value => c -> o
