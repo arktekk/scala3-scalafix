@@ -46,12 +46,11 @@ object ImplicitDeriveEncoder {
       case v@Defn.Val(
       mods,
       _,
-      // Some(Type.Apply(
-      //   Type.Select(Term.Name("Encoder"), Type.Name("AsObject")),
-      //   _
-      // )),
-      _,
-      Term.ApplyType(Term.Name("deriveEncoder"), (typeName: Type.Name) :: Nil)
+       Some(Type.Apply(
+         Type.Select(Term.Name("Encoder"), Type.Name("AsObject")),
+         (typeName: Type.Name) :: Nil
+       )),
+      _
       ) if typeName.value == o.name.value && hasImplicitMod(mods) => v
     }
 
