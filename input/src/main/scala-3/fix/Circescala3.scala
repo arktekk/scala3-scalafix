@@ -9,21 +9,26 @@ import io.circe.generic.semiauto.*
 // format: off
 object Circescala3 {
 
-  case class Person(name: String, age: Int)
-  object Person {
-    implicit val encoder: Encoder.AsObject[Person] = deriveEncoder[Person]
+  case class DeriveEncoderWithTypes(name: String, age: Int)
+  object DeriveEncoderWithTypes {
+    implicit val encoder: Encoder.AsObject[DeriveEncoderWithTypes] = deriveEncoder[DeriveEncoderWithTypes]
   }
 
-  case class Person2(name: String, age: Int)
-  object Person2 {
-    implicit val encoder: Encoder.AsObject[Person2] = deriveEncoder
+  case class DeriveEncoder(name: String, age: Int)
+  object DeriveEncoder {
+    implicit val encoder: Encoder.AsObject[DeriveEncoder] = deriveEncoder
   }
 
-  case class Company(name: String)
+  case class DoNotChange(name: String)
 
-  case class Company2(name: String) derives Decoder
-  object Company2 {
-    implicit val encoder: Encoder.AsObject[Company2] = deriveEncoder
+  case class CaseClassWithExistingDerived(name: String) derives Decoder
+  object CaseClassWithExistingDerived {
+    implicit val encoder: Encoder.AsObject[CaseClassWithExistingDerived] = deriveEncoder
+  }
+
+  case class CaseClassWithEncodedNotDerived(name: String)
+  object CaseClassWithEncodedNotDerived {
+    implicit val enc: Encoder.AsObject[CaseClassWithEncodedNotDerived] = company3 => JsonObject()
   }
 }
 // format: on
