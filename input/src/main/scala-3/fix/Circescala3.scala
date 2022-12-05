@@ -3,8 +3,8 @@ rule = Circescala3
  */
 package fix
 
-import io.circe._
-import io.circe.generic.semiauto._
+import io.circe.*
+import io.circe.generic.semiauto.*
 
 // format: off
 object Circescala3 {
@@ -20,5 +20,10 @@ object Circescala3 {
   }
 
   case class Company(name: String)
+
+  case class Company2(name: String) derives Decoder
+  object Company2 {
+    implicit val encoder: Encoder.AsObject[Company2] = deriveEncoder
+  }
 }
 // format: on

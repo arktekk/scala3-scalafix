@@ -1,6 +1,6 @@
 package fix
 
-import scalafix.v1._
+import scalafix.v1.{Patch, _}
 
 import scala.meta._
 
@@ -13,7 +13,10 @@ class Circescala3 extends SemanticRule("Circescala3") {
     //    println("Tree.structureLabeled: " + doc.tree.structureLabeled)
 
     doc.tree.collect { case ClassWithCompanion(c, ImplicitDeriveEncoder(v)) =>
-      (Patch.addRight(c, " derives Encoder.AsObject") +: v.tokens.map(Patch.removeToken)).asPatch
+      val classPatch =
+        if (c.templ. derives.isEmpty) Patch.addRight(c, " derives Encoder.AsObject")
+        else Patch.addRight(c, ", Encoder.AsObject")
+      (classPatch +: v.tokens.map(Patch.removeToken)).asPatch
     }.asPatch
   }
 
