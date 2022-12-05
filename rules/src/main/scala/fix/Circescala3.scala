@@ -12,14 +12,33 @@ class Circescala3 extends SemanticRule("Circescala3") {
     //    println("Tree.structure: " + doc.tree.structure)
     //    println("Tree.structureLabeled: " + doc.tree.structureLabeled)
 
-    doc.tree.collect { case ClassWithCompanion(c, ImplicitDeriveEncoder(v)) =>
-      val classPatch =
-        if (c.templ. derives.isEmpty) Patch.addRight(c, " derives Encoder.AsObject")
-        else Patch.addRight(c, ", Encoder.AsObject")
-      (classPatch +: v.tokens.map(Patch.removeToken)).asPatch
+    val config = Set(
+      Circescala3.Config("io.circe.Encoder.AsObject", "Encoder.AsObject"),
+      Circescala3.Config("io.circe.Encoder", "Encoder.AsObject"),
+      Circescala3.Config("io.circe.Decoder", "Decoder")
+    ).map(c => c.typ -> c).toMap
+
+    val implicitTypesToInclude = config.keySet
+    doc.tree.collect { case ClassWithCompanion(c, ImplicitDeriveValues(items)) =>
+      items.filter(item => implicitTypesToInclude.contains(item._1)) match {
+        case Nil => Patch.empty
+        case toRewrite =>
+          val base = if (c.templ. derives.isEmpty) " derives " else ", "
+          val derivePatch = Patch.addRight(c, base ++ toRewrite.map(_._1).map(config(_).derived).mkString(", "))
+          val removeImplicitPatches = Patch.removeTokens(toRewrite.flatMap(_._2.tokens))
+          derivePatch + removeImplicitPatches
+      }
     }.asPatch
   }
 
+}
+
+object Circescala3 {
+
+  case class Config(
+      typ: String,
+      derived: String
+  )
 }
 
 object ClassWithCompanion {
@@ -35,22 +54,16 @@ object ClassWithCompanion {
     }
 }
 
-object ImplicitDeriveEncoder {
-  def unapply(o: Defn.Object): Option[Defn.Val] =
-    o.templ.stats.collectFirst {
-      case v @ Defn.Val(
-            mods,
-            _,
-            Some(
-              Type.Apply(
-                Type.Select(Term.Name("Encoder"), Type.Name("AsObject")),
-                (typeName: Type.Name) :: Nil
-              )
-            ),
-            _
-          ) if typeName.value == o.name.value && hasImplicitMod(mods) =>
-        v
+object ImplicitDeriveValues {
+  def unapply(o: Defn.Object)(implicit doc: SemanticDocument): Option[List[(String, Defn.Val)]] = {
+    val vals = o.templ.stats.collect {
+      case v @ Defn.Val(mods, _, Some(typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil)), _)
+          if typeName.value == o.name.value && hasImplicitMod(mods) =>
+        typeApply.symbol.normalized.value.dropRight(1) -> v
     }
+    if (vals.isEmpty) None
+    else Some(vals)
+  }
 
   private def hasImplicitMod(mods: List[Mod]) =
     mods.exists {
