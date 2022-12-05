@@ -15,7 +15,9 @@ class Circescala3 extends SemanticRule("Circescala3") {
     val config = Set(
       Circescala3.Config("io.circe.Encoder.AsObject", "Encoder.AsObject"),
       Circescala3.Config("io.circe.Encoder", "Encoder.AsObject"),
-      Circescala3.Config("io.circe.Decoder", "Decoder")
+      Circescala3.Config("io.circe.Decoder", "Decoder"),
+      Circescala3.Config("io.circe.Codec.AsObject", "Codec.AsObject"),
+      Circescala3.Config("io.circe.Codec", "Codec.AsObject")
     ).map(c => c.typ -> c).toMap
 
     val implicitTypesToInclude = config.keySet
