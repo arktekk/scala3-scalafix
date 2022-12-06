@@ -44,5 +44,12 @@ object Circescala3 {
   object WithExtendAndBody {
     implicit val encoder: Encoder.AsObject[WithExtendAndBody] = deriveEncoder
   }
+
+  case class WithBody(name: String) {
+    val i: Int = 1
+  }
+  object WithBody {
+    implicit val encoder: Encoder.AsObject[WithBody] = deriveEncoder
+  }
 }
 // format: on

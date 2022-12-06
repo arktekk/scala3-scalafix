@@ -33,5 +33,10 @@ object Circescala3 {
     val i: Int = 1
   }
   
+
+  case class WithBody(name: String) derives Encoder.AsObject {
+    val i: Int = 1
+  }
+  
 }
 // format: on
