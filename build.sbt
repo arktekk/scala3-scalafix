@@ -1,6 +1,6 @@
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
-lazy val rulesCrossVersions = Seq(V.scala213)
+lazy val rulesCrossVersions = Seq(V.scala213, V.scala212)
 lazy val scala3Version = "3.0.1"
 
 inThisBuild(
@@ -41,11 +41,11 @@ lazy val `circe-scala-3` = (project in file("."))
 
 lazy val rules = projectMatrix
   .settings(
-    moduleName := "scalafix",
+    moduleName := "scalafix-circe-derived-rules",
     libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
   )
   .defaultAxes(VirtualAxis.jvm)
-  .jvmPlatform(V.scala213 :: Nil)
+  .jvmPlatform(V.scala213 :: V.scala212 :: Nil)
 
 lazy val input = projectMatrix
   .settings(
