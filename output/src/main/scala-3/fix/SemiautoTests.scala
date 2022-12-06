@@ -5,7 +5,7 @@ import io.circe.generic.semiauto.*
 import doobie.*
 
 // format: off
-object Circescala3 {
+object SemiAutoTests {
 
   case class DeriveEncoderWithTypes(name: String, age: Int) derives Encoder.AsObject
   

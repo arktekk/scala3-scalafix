@@ -1,5 +1,5 @@
 /*
-rule = Circescala3
+rule = SemiAuto
  */
 package fix
 
@@ -8,7 +8,7 @@ import io.circe.generic.semiauto.*
 import doobie.*
 
 // format: off
-object Circescala3 {
+object SemiAutoTests {
 
   case class DeriveEncoderWithTypes(name: String, age: Int)
   object DeriveEncoderWithTypes {
