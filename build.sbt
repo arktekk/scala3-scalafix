@@ -6,7 +6,7 @@ lazy val scala3Version = "3.2.1"
 inThisBuild(
   List(
     organization := "com.github.ingarabr",
-    homepage := Some(url("https://github.com/ingarabr")),
+    homepage := Some(url("https://github.com/ingarabr/scala3-scalafix")),
     licenses := List(
       "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")
     ),
@@ -14,7 +14,7 @@ inThisBuild(
       Developer(
         "ingarabr",
         "Ingar Abrahamsen",
-        "",
+        "oss@abrahams1.com",
         url("https://github.com/ingarabr")
       )
     ),
@@ -30,7 +30,7 @@ val circeDeps = List(
 
 val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC2"
 
-lazy val `circe-scala-3` = (project in file("."))
+lazy val `scala3-scalafix-root` = (project in file("."))
   .aggregate(
     rules.projectRefs ++
       input.projectRefs ++
@@ -43,7 +43,8 @@ lazy val `circe-scala-3` = (project in file("."))
 
 lazy val rules = projectMatrix
   .settings(
-    moduleName := "scalafix-scala3-rules",
+    name := "scala3-scalafix",
+    moduleName := name.value,
     libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
   )
   .defaultAxes(VirtualAxis.jvm)
