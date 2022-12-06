@@ -1,7 +1,7 @@
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
 lazy val rulesCrossVersions = Seq(V.scala213, V.scala212)
-lazy val scala3Version = "3.0.1"
+lazy val scala3Version = "3.2.1"
 
 inThisBuild(
   List(
@@ -26,7 +26,9 @@ inThisBuild(
 val circeDeps = List(
   "io.circe" %% "circe-generic",
   "io.circe" %% "circe-core"
-).map(_ % "0.14.1")
+).map(_ % "0.14.2")
+
+val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC2"
 
 lazy val `circe-scala-3` = (project in file("."))
   .aggregate(
@@ -50,7 +52,8 @@ lazy val rules = projectMatrix
 lazy val input = projectMatrix
   .settings(
     publish / skip := true,
-    libraryDependencies ++= circeDeps
+    libraryDependencies ++= circeDeps,
+    libraryDependencies += doobie
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
@@ -58,7 +61,8 @@ lazy val input = projectMatrix
 lazy val output = projectMatrix
   .settings(
     publish / skip := true,
-    libraryDependencies ++= circeDeps
+    libraryDependencies ++= circeDeps,
+    libraryDependencies += doobie
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)

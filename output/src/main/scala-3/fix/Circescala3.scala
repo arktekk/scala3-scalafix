@@ -2,6 +2,7 @@ package fix
 
 import io.circe.*
 import io.circe.generic.semiauto.*
+import doobie.*
 
 // format: off
 object Circescala3 {
@@ -34,7 +35,7 @@ object Circescala3 {
   }
   
 
-  case class WithBody(name: String) derives Encoder.AsObject {
+  case class WithBody(name: String) derives Encoder.AsObject, Read {
     val i: Int = 1
   }
   

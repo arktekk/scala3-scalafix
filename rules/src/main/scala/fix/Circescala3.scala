@@ -17,7 +17,11 @@ class Circescala3 extends SemanticRule("Circescala3") {
       Circescala3.Config("io.circe.Encoder", "Encoder.AsObject"),
       Circescala3.Config("io.circe.Decoder", "Decoder"),
       Circescala3.Config("io.circe.Codec.AsObject", "Codec.AsObject"),
-      Circescala3.Config("io.circe.Codec", "Codec.AsObject")
+      Circescala3.Config("io.circe.Codec", "Codec.AsObject"),
+      Circescala3.Config("doobie.util.Read", "Read"),
+      Circescala3.Config("doobie.Types.Read", "Read"),
+      Circescala3.Config("doobie.util.Write", "Write"),
+      Circescala3.Config("doobie.Types.Write", "Write")
     ).map(c => c.typ -> c).toMap
 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
@@ -91,8 +95,9 @@ object SemiAutoDerived {
   private def matchingType(o: Defn.Object, typeName: Type.Name) =
     typeName.value == o.name.value
 
-  private def isSemiAuto(t: Term)(implicit doc: SemanticDocument) =
-    t.symbol.normalized.value.contains(".semiauto.")
+  private def isSemiAuto(t: Term)(implicit doc: SemanticDocument) = {
+    t.symbol.normalized.value.contains(".semiauto.") || t.symbol.normalized.value.contains("derived")
+  }
 
   private def nonEmptyList[A](l: List[A]): Option[List[A]] =
     if (l.isEmpty) None else Some(l)
