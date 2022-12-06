@@ -17,7 +17,7 @@ object Circescala3 {
     val i: Int = 1
     
   }
-  
+
   case class DoNotChange(name: String)
 
   case class CaseClassWithExistingDerived(name: String) derives Decoder, Encoder.AsObject
@@ -27,5 +27,11 @@ object Circescala3 {
   object CaseClassWithEncodedNotDerived {
     implicit val enc: Encoder.AsObject[CaseClassWithEncodedNotDerived] = company3 => JsonObject()
   }
+
+  trait Foo
+  case class WithExtendAndBody(name: String) extends Foo derives Encoder.AsObject {
+    val i: Int = 1
+  }
+  
 }
 // format: on

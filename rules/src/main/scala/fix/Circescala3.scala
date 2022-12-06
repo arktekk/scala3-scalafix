@@ -24,8 +24,12 @@ class Circescala3 extends SemanticRule("Circescala3") {
       items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
         case Nil => Patch.empty
         case toRewrite =>
+          val derivePos =
+            caseClass.templ. derives.lastOption
+              .orElse(caseClass.templ.inits.lastOption)
+              .getOrElse(caseClass)
           val base = if (caseClass.templ. derives.isEmpty) " derives " else ", "
-          val derivePatch = Patch.addRight(caseClass, base ++ toRewrite.map(_._2.derived).mkString(", "))
+          val derivePatch = Patch.addRight(derivePos, base ++ toRewrite.map(_._2.derived).mkString(", "))
           val removePatch =
             if (childrenInCompanion(companion) == toRewrite.size) Patch.removeTokens(companion.tokens)
             else Patch.removeTokens(toRewrite.flatMap(_._1.defnVal.tokens))
