@@ -1,6 +1,9 @@
 /*
 rule = SemiAuto
 SemiAuto.bundles = [doobie]
+SemiAuto.rewrites = [
+  { typeClass = "io.circe.Decoder", derived =  "Decoder" }
+]
  */
 package fix
 

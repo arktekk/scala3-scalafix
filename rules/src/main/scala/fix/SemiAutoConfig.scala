@@ -1,14 +1,18 @@
 package fix
 
-import metaconfig.ConfDecoder
+import fix.SemiAutoConfig.Rewrite
+import metaconfig.{Conf, ConfDecoder, ConfError, Configured}
 import metaconfig.generic.Surface
 
 case class SemiAutoConfig(
     bundles: List[String] = List("all"),
+    rewrites: List[Rewrite] = List.empty
 ) {
-  def rewrites: Set[SemiAutoConfig.Rewrite] = {
-    if (bundles == List("all")) SemiAutoConfig.rewriteBundles.values.flatten.toSet
-    else bundles.flatMap(name => SemiAutoConfig.rewriteBundles.get(name)).flatten.toSet
+  def allRewrites: Set[SemiAutoConfig.Rewrite] = {
+    val fromBundle =
+      if (bundles == List("all")) SemiAutoConfig.rewriteBundles.values.flatten.toSet
+      else bundles.flatMap(name => SemiAutoConfig.rewriteBundles.get(name)).flatten.toSet
+    fromBundle ++ rewrites.toSet
   }
 }
 
@@ -39,6 +43,18 @@ object SemiAutoConfig {
       typeClass: String,
       derived: String
   )
+
+  object Rewrite {
+    implicit val surface: Surface[Rewrite] =
+      metaconfig.generic.deriveSurface[Rewrite]
+    implicit val reader: ConfDecoder[Rewrite] =
+      ConfDecoder.from[Rewrite] {
+        case c: Conf.Obj =>
+          (c.get[String]("typeclass", "typeClass") |@|
+            c.get[String]("derived")).map{case (tc,d) => Rewrite(tc, d)}
+        case _ => Configured.NotOk(ConfError.message("Wrong config format"))
+      }
+  }
 
 }
 

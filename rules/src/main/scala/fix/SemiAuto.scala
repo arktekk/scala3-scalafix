@@ -18,7 +18,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
     //    println("Tree.structure: " + doc.tree.structure)
     //    println("Tree.structureLabeled: " + doc.tree.structureLabeled)
 
-    val config = semiAutoConfig.rewrites.map(c => c.typeClass -> c).toMap
+    val config = semiAutoConfig.allRewrites.map(c => c.typeClass -> c).toMap
 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
       items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
