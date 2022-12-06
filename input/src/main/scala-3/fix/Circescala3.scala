@@ -5,6 +5,7 @@ package fix
 
 import io.circe.*
 import io.circe.generic.semiauto.*
+import doobie.*
 
 // format: off
 object Circescala3 {
@@ -50,6 +51,7 @@ object Circescala3 {
   }
   object WithBody {
     implicit val encoder: Encoder.AsObject[WithBody] = deriveEncoder
+    implicit val reads: Read[WithBody] = Read.derived
   }
 }
 // format: on
