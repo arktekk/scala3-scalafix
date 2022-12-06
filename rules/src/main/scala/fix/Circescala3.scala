@@ -20,15 +20,6 @@ class Circescala3 extends SemanticRule("Circescala3") {
       Circescala3.Config("io.circe.Codec", "Codec.AsObject")
     ).map(c => c.typ -> c).toMap
 
-    def toType(config: Circescala3.Config) = {
-      config.derived.split("\\.") match {
-        case Array(a, b) => Type.Select(Term.Name(a), Type.Name(b))
-        case Array(a) => Type.Name(a)
-        case _ => sys.error("nope")
-      }
-    }
-
-
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
       items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
         case Nil => Patch.empty
