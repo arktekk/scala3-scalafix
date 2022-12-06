@@ -4,7 +4,7 @@ import scalafix.v1.{Patch, _}
 
 import scala.meta._
 
-class Circescala3 extends SemanticRule("Circescala3") {
+class SemiAuto extends SemanticRule("SemiAuto") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
 
@@ -13,15 +13,15 @@ class Circescala3 extends SemanticRule("Circescala3") {
     //    println("Tree.structureLabeled: " + doc.tree.structureLabeled)
 
     val config = Set(
-      Circescala3.Config("io.circe.Encoder.AsObject", "Encoder.AsObject"),
-      Circescala3.Config("io.circe.Encoder", "Encoder.AsObject"),
-      Circescala3.Config("io.circe.Decoder", "Decoder"),
-      Circescala3.Config("io.circe.Codec.AsObject", "Codec.AsObject"),
-      Circescala3.Config("io.circe.Codec", "Codec.AsObject"),
-      Circescala3.Config("doobie.util.Read", "Read"),
-      Circescala3.Config("doobie.Types.Read", "Read"),
-      Circescala3.Config("doobie.util.Write", "Write"),
-      Circescala3.Config("doobie.Types.Write", "Write")
+      SemiAuto.Config("io.circe.Encoder.AsObject", "Encoder.AsObject"),
+      SemiAuto.Config("io.circe.Encoder", "Encoder.AsObject"),
+      SemiAuto.Config("io.circe.Decoder", "Decoder"),
+      SemiAuto.Config("io.circe.Codec.AsObject", "Codec.AsObject"),
+      SemiAuto.Config("io.circe.Codec", "Codec.AsObject"),
+      SemiAuto.Config("doobie.util.Read", "Read"),
+      SemiAuto.Config("doobie.Types.Read", "Read"),
+      SemiAuto.Config("doobie.util.Write", "Write"),
+      SemiAuto.Config("doobie.Types.Write", "Write")
     ).map(c => c.typ -> c).toMap
 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
@@ -52,7 +52,7 @@ class Circescala3 extends SemanticRule("Circescala3") {
   }
 }
 
-object Circescala3 {
+object SemiAuto {
 
   case class Config(
       typ: String,
