@@ -1,10 +1,16 @@
 package fix
 
+import metaconfig.Configured
 import scalafix.v1.{Patch, _}
 
 import scala.meta._
 
-class SemiAuto extends SemanticRule("SemiAuto") {
+class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") {
+  def this() = this(SemiAutoConfig())
+
+  override def withConfiguration(configuration: Configuration): Configured[Rule] =
+    configuration.conf.getOrElse("SemiAuto")(this.semiAutoConfig)
+      .map(newConfig => new SemiAuto(newConfig) )
 
   override def fix(implicit doc: SemanticDocument): Patch = {
 
@@ -12,17 +18,7 @@ class SemiAuto extends SemanticRule("SemiAuto") {
     //    println("Tree.structure: " + doc.tree.structure)
     //    println("Tree.structureLabeled: " + doc.tree.structureLabeled)
 
-    val config = Set(
-      SemiAuto.Config("io.circe.Encoder.AsObject", "Encoder.AsObject"),
-      SemiAuto.Config("io.circe.Encoder", "Encoder.AsObject"),
-      SemiAuto.Config("io.circe.Decoder", "Decoder"),
-      SemiAuto.Config("io.circe.Codec.AsObject", "Codec.AsObject"),
-      SemiAuto.Config("io.circe.Codec", "Codec.AsObject"),
-      SemiAuto.Config("doobie.util.Read", "Read"),
-      SemiAuto.Config("doobie.Types.Read", "Read"),
-      SemiAuto.Config("doobie.util.Write", "Write"),
-      SemiAuto.Config("doobie.Types.Write", "Write")
-    ).map(c => c.typ -> c).toMap
+    val config = semiAutoConfig.allRewrites.map(c => c.typeClass -> c).toMap
 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
       items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
@@ -50,14 +46,6 @@ class SemiAuto extends SemanticRule("SemiAuto") {
       case _                            => true
     }
   }
-}
-
-object SemiAuto {
-
-  case class Config(
-      typ: String,
-      derived: String
-  )
 }
 
 object CaseClassWithCompanion {
