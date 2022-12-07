@@ -9,8 +9,9 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
   def this() = this(SemiAutoConfig())
 
   override def withConfiguration(configuration: Configuration): Configured[Rule] =
-    configuration.conf.getOrElse("SemiAuto")(this.semiAutoConfig)
-      .map(newConfig => new SemiAuto(newConfig) )
+    configuration.conf
+      .getOrElse("SemiAuto")(this.semiAutoConfig)
+      .map(newConfig => new SemiAuto(newConfig))
 
   override def fix(implicit doc: SemanticDocument): Patch = {
 
@@ -25,11 +26,11 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
         case Nil => Patch.empty
         case toRewrite =>
           val derivePos =
-            caseClass.templ.derives.lastOption
+            caseClass.templ. derives.lastOption
               .orElse(caseClass.templ.inits.lastOption)
               .orElse(if (caseClass.templ.stats.nonEmpty) Some(caseClass.ctor) else None)
               .getOrElse(caseClass)
-          val base = if (caseClass.templ.derives.isEmpty) " derives " else ", "
+          val base = if (caseClass.templ. derives.isEmpty) " derives " else ", "
           val derivePatch = Patch.addRight(derivePos, base ++ toRewrite.map(_._2.derived).mkString(", "))
           val removePatch =
             if (childrenInCompanion(companion) == toRewrite.size) Patch.removeTokens(companion.tokens)

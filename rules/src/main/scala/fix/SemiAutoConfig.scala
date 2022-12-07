@@ -29,7 +29,7 @@ object SemiAutoConfig {
       SemiAutoConfig.Rewrite("io.circe.Encoder", "Encoder.AsObject"),
       SemiAutoConfig.Rewrite("io.circe.Decoder", "Decoder"),
       SemiAutoConfig.Rewrite("io.circe.Codec.AsObject", "Codec.AsObject"),
-      SemiAutoConfig.Rewrite("io.circe.Codec", "Codec.AsObject"),
+      SemiAutoConfig.Rewrite("io.circe.Codec", "Codec.AsObject")
     ),
     "doobie" -> List(
       SemiAutoConfig.Rewrite("doobie.util.Read", "Read"),
@@ -51,10 +51,9 @@ object SemiAutoConfig {
       ConfDecoder.from[Rewrite] {
         case c: Conf.Obj =>
           (c.get[String]("typeclass", "typeClass") |@|
-            c.get[String]("derived")).map{case (tc,d) => Rewrite(tc, d)}
+            c.get[String]("derived")).map { case (tc, d) => Rewrite(tc, d) }
         case _ => Configured.NotOk(ConfError.message("Wrong config format"))
       }
   }
 
 }
-
