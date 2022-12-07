@@ -43,7 +43,7 @@ lazy val `circe-scala-3` = (project in file("."))
 
 lazy val rules = projectMatrix
   .settings(
-    moduleName := "scalafix-circe-derived-rules",
+    moduleName := "scalafix-scala3-rules",
     libraryDependencies += "ch.epfl.scala" %% "scalafix-core" % V.scalafixVersion
   )
   .defaultAxes(VirtualAxis.jvm)
