@@ -22,6 +22,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
     val config = semiAutoConfig.allRewrites.map(c => c.typeClass -> c).toMap
 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
+      reportCandidates(config, items)
       items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
         case Nil => Patch.empty
         case toRewrite =>
@@ -39,6 +40,12 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
           derivePatch + removePatch
       }
     }.asPatch
+  }
+
+  def reportCandidates(config: Map[String, SemiAutoConfig.Rewrite], items: List[SemiAutoDerived]) = {
+    items.filterNot(c => config.contains(c.deriveType)).foreach( item =>
+      println(s"Candidate for derivation, but not configured. \ntype: ${item.deriveType}\ninstance: ${item.defnVal.structure}")
+    )
   }
 
   private def childrenInCompanion(companion: Defn.Object): Int = {
