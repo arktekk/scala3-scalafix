@@ -16,7 +16,7 @@ class SemiautoConfigTest {
 
   case class WithBody(name: String)
   object WithBody {
-    implicit val encoder: Encoder.AsObject[WithBody] = deriveEncoder
+    implicit val encoder: Encoder.AsObject[WithBody] = deriveEncoder// assert: SemiAuto
     implicit val decoder: Decoder[WithBody] = deriveDecoder
     implicit val reads: Read[WithBody] = Read.derived
   }
