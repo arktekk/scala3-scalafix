@@ -1,6 +1,7 @@
 package fix
 
 import metaconfig.Configured
+import scalafix.lint.LintSeverity
 import scalafix.v1.{Patch, _}
 
 import scala.meta._
@@ -14,16 +15,12 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
       .map(newConfig => new SemiAuto(newConfig))
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-
-    //    println("Tree.syntax: " + doc.tree.syntax)
-    //    println("Tree.structure: " + doc.tree.structure)
-    //    println("Tree.structureLabeled: " + doc.tree.structureLabeled)
-
     val config = semiAutoConfig.allRewrites.map(c => c.typeClass -> c).toMap
 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
-      reportCandidates(config, items)
-      items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
+      reportCandidates(config, items).asPatch + (items.flatMap(item =>
+        config.get(item.deriveType).map(item -> _)
+      ) match {
         case Nil => Patch.empty
         case toRewrite =>
           val derivePos =
@@ -38,14 +35,14 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
             else Patch.removeTokens(toRewrite.flatMap(_._1.defnVal.tokens))
 
           derivePatch + removePatch
-      }
+      })
     }.asPatch
   }
 
   def reportCandidates(config: Map[String, SemiAutoConfig.Rewrite], items: List[SemiAutoDerived]) = {
-    items.filterNot(c => config.contains(c.deriveType)).foreach( item =>
-      println(s"Candidate for derivation, but not configured. \ntype: ${item.deriveType}\ninstance: ${item.defnVal.structure}")
-    )
+    items
+      .filterNot(c => config.contains(c.deriveType))
+      .map(item => Patch.lint(SemiAutoDerived.Candidate(item.defnVal.pos, item)))
   }
 
   private def childrenInCompanion(companion: Defn.Object): Int = {
@@ -79,6 +76,7 @@ case class SemiAutoDerived(
     deriveType: String,
     defnVal: Defn.Val
 )
+
 object SemiAutoDerived {
 
   def unapply(o: Defn.Object)(implicit doc: SemanticDocument): Option[List[SemiAutoDerived]] =
@@ -103,4 +101,16 @@ object SemiAutoDerived {
       case _: Mod.Implicit => true
       case _               => false
     }
+
+  case class Candidate(position: Position, derived: SemiAutoDerived) extends Diagnostic {
+    def message =
+      s"""Can be used in derives clause. Add to SemiAuto.rewrites config:
+         |{ typeclass = "${derived.deriveType}", derived = "${derived.deriveType.substring(
+          derived.deriveType.lastIndexOf('.') + 1
+        )}" }
+         |
+         |""".stripMargin
+
+    override def severity: LintSeverity = LintSeverity.Info
+  }
 }
