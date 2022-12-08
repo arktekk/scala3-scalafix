@@ -54,7 +54,8 @@ lazy val input = projectMatrix
   .settings(
     publish / skip := true,
     libraryDependencies ++= circeDeps,
-    libraryDependencies += doobie
+    libraryDependencies += doobie,
+    SettingKey[Boolean]("ide-skip-project") := true
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
@@ -63,7 +64,8 @@ lazy val output = projectMatrix
   .settings(
     publish / skip := true,
     libraryDependencies ++= circeDeps,
-    libraryDependencies += doobie
+    libraryDependencies += doobie,
+    SettingKey[Boolean]("ide-skip-project") := true
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
