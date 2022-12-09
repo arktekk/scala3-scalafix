@@ -39,5 +39,9 @@ object SemiAutoTests {
     val i: Int = 1
   }
   
+
+  case class ScalaGiven(i: Int) derives Read, Encoder.AsObject
+  
+
 }
 // format: on

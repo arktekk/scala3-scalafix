@@ -36,7 +36,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
     doc.tree.collect { case CaseClassWithCompanion(caseClass, companion @ SemiAutoDerived(items)) =>
       val lint = items
         .filterNot(c => config.contains(c.deriveType))
-        .map(item => Patch.lint(DerivesCandidate(item.defnVal.pos, item)))
+        .map(item => Patch.lint(DerivesCandidate(item.defn.pos, item)))
         .asPatch
 
       val applied = items.flatMap(item => config.get(item.deriveType).map(item -> _)) match {
@@ -51,7 +51,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
           val derivePatch = Patch.addRight(derivePos, base ++ toRewrite.map(_._2.derived).mkString(", "))
           val removePatch =
             if (childrenInCompanion(companion) == toRewrite.size) Patch.removeTokens(companion.tokens)
-            else Patch.removeTokens(toRewrite.flatMap(_._1.defnVal.tokens))
+            else Patch.removeTokens(toRewrite.flatMap(_._1.defn.tokens))
 
           derivePatch + removePatch
       }
@@ -86,18 +86,21 @@ object CaseClassWithCompanion {
     }
 }
 
-case class SemiAutoDerived(deriveType: String, defnVal: Defn.Val)
+case class SemiAutoDerived(deriveType: String, defn: Defn)
 
 object SemiAutoDerived {
 
   def unapply(o: Defn.Object)(implicit doc: SemanticDocument): Option[List[SemiAutoDerived]] =
     nonEmptyList(o.templ.stats.collect {
-      case v @ Defn.Val(mods, _, Some(typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil)), t)
-          if matchingType(o, typeName) && hasImplicitMod(mods) && isSemiAuto(t) =>
+      case g @ Defn.GivenAlias(_, _, _, _, typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil), body)
+          if matchingType(o, typeName) && isSemiAuto(body) =>
+        SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), g)
+      case v @ Defn.Val(mods, _, Some(typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
+          if matchingType(o, typeName) && hasImplicitMod(mods) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), v)
     })
 
-  private def matchingType(o: Defn.Object, typeName: Type.Name) =
+  private def matchingType(o: Defn.Object, typeName: Type.Name): Boolean =
     typeName.value == o.name.value
 
   private def isSemiAuto(t: Term)(implicit doc: SemanticDocument) = {
@@ -115,16 +118,22 @@ object SemiAutoDerived {
 }
 
 case class DerivesCandidate(position: Position, derived: SemiAutoDerived) extends Diagnostic {
-  private def toType = derived.defnVal.decltpe
-    .map {
+  private def extractType(t: Type): String =
+    t match {
       case Type.Apply(typ, _) => typ.syntax
       case t                  => t.syntax
     }
-    .getOrElse("")
+
+  private def toType: String =
+    (derived.defn match {
+      case v: Defn.Val        => v.decltpe.map(extractType)
+      case g: Defn.GivenAlias => Some(extractType(g.decltpe))
+      case _                  => None
+    }).getOrElse("")
 
   def message =
     s"""Can be used in derives clause. Add to SemiAuto.rewrites config:
-       |{ typeclass = "${derived.deriveType}", derived = "${toType}" }
+       |{ typeclass = "${derived.deriveType}", derived = "$toType" }
        |
        |""".stripMargin
 
