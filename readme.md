@@ -32,3 +32,27 @@ object Person{
 case class Person(name: String) derives Codec.AsObject
 ```
 
+## GivenAndUsing
+
+Rewrite implicit keywords to given and using.
+
+**Example:**
+```scala
+// Before
+case class Message(m: String)
+object Message {
+  implicit show: Show[Message] = ???
+}
+class Printer(implicit console: Console) {
+  def print[A](implicit showA: Show[A]): Unit = ???
+}
+
+//After
+case class Message(m: String)
+object Message {
+  given show: Show[Message] = ???
+}
+class Printer(using console: Console) {
+  def print[A](using showA: Show[A]): Unit = ???
+}
+```
