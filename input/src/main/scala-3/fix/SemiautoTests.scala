@@ -53,5 +53,12 @@ object SemiAutoTests {
     implicit val encoder: Encoder.AsObject[WithBody] = deriveEncoder
     implicit val reads: Read[WithBody] = Read.derived
   }
+
+  case class ScalaGiven(i: Int)
+  object ScalaGiven {
+    given foo: Read[ScalaGiven] = Read.derived
+    given Encoder.AsObject[ScalaGiven] = deriveEncoder
+  }
+
 }
 // format: on
