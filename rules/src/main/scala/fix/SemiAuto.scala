@@ -43,11 +43,11 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
         case Nil => Patch.empty
         case toRewrite =>
           val derivePos =
-            caseClass.templ. derives.lastOption
+            caseClass.templ.derives.lastOption
               .orElse(caseClass.templ.inits.lastOption)
               .orElse(if (caseClass.templ.stats.nonEmpty) Some(caseClass.ctor) else None)
               .getOrElse(caseClass)
-          val base = if (caseClass.templ. derives.isEmpty) " derives " else ", "
+          val base = if (caseClass.templ.derives.isEmpty) " derives " else ", "
           val derivePatch = Patch.addRight(derivePos, base ++ toRewrite.map(_._2.derived).mkString(", "))
           val removePatch =
             if (childrenInCompanion(companion) == toRewrite.size) Patch.removeTokens(companion.tokens)
