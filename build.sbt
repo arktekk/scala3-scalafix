@@ -24,7 +24,6 @@ inThisBuild(
         "erlend@hamnaberg.net",
         url("https://github.com/hamnis")
       )
-
     ),
     tlSonatypeUseLegacyHost := true,
     semanticdbEnabled := true,
@@ -62,7 +61,9 @@ lazy val input = projectMatrix
   .settings(
     libraryDependencies ++= circeDeps,
     libraryDependencies += doobie,
-    SettingKey[Boolean]("ide-skip-project") := true
+    SettingKey[Boolean]("ide-skip-project") := true,
+    headerSources / excludeFilter := AllPassFilter,
+    tlFatalWarnings := false
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
@@ -72,7 +73,9 @@ lazy val output = projectMatrix
   .settings(
     libraryDependencies ++= circeDeps,
     libraryDependencies += doobie,
-    SettingKey[Boolean]("ide-skip-project") := true
+    SettingKey[Boolean]("ide-skip-project") := true,
+    headerSources / excludeFilter := AllPassFilter,
+    tlFatalWarnings := false
   )
   .defaultAxes(VirtualAxis.jvm)
   .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
