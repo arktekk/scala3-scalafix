@@ -70,7 +70,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
 object CaseClassWithCompanion {
   def unapply(t: Tree): Option[(Defn.Class, Defn.Object)] =
     t match {
-      case c @ Defn.Class(mods, cName, _, _, _) if isCaseClass(mods) =>
+      case c @ Defn.Class(mods, cName, _, _, _) if mods.exists(_.isModCase) =>
         c.parent.flatMap { st =>
           st.children.collectFirst {
             case o @ Defn.Object(_, oName, _) if cName.value == oName.value => c -> o
@@ -79,11 +79,6 @@ object CaseClassWithCompanion {
       case _ => None
     }
 
-  private def isCaseClass(mods: List[Mod]) =
-    mods.exists {
-      case _: Mod.Case => true
-      case _           => false
-    }
 }
 
 case class SemiAutoDerived(deriveType: String, defn: Defn)
@@ -96,7 +91,7 @@ object SemiAutoDerived {
           if matchingType(o, typeName) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), g)
       case v @ Defn.Val(mods, _, Some(typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
-          if matchingType(o, typeName) && hasImplicitMod(mods) && isSemiAuto(body) =>
+          if matchingType(o, typeName) && mods.exists(_.isModImplicit) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), v)
     })
 
@@ -110,11 +105,6 @@ object SemiAutoDerived {
   private def nonEmptyList[A](l: List[A]): Option[List[A]] =
     if (l.isEmpty) None else Some(l)
 
-  private def hasImplicitMod(mods: List[Mod]) =
-    mods.exists {
-      case _: Mod.Implicit => true
-      case _               => false
-    }
 }
 
 case class DerivesCandidate(position: Position, derived: SemiAutoDerived) extends Diagnostic {
