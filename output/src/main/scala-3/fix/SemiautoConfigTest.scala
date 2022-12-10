@@ -10,8 +10,8 @@ class SemiautoConfigTest {
   case class WithBody(name: String) derives Decoder, Read
   object WithBody {
     implicit val encoder: Encoder.AsObject[WithBody] = deriveEncoder
-    
-    
+
+
   }
 
 }

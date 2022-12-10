@@ -50,8 +50,9 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
           val base = if (caseClass.templ.derives.isEmpty) " derives " else ", "
           val derivePatch = Patch.addRight(derivePos, base ++ toRewrite.map(_._2.derived).mkString(", "))
           val removePatch =
-            if (childrenInCompanion(companion) == toRewrite.size) Patch.removeTokens(companion.tokens)
-            else Patch.removeTokens(toRewrite.flatMap(_._1.defn.tokens))
+            if (childrenInCompanion(companion) == toRewrite.size)
+              Patch.removeTokens(companion.tokens.tokensWithLeadingSpace())
+            else Patch.removeTokens(toRewrite.flatMap(_._1.defn.tokens.tokensWithLeadingSpace()))
 
           derivePatch + removePatch
       }
