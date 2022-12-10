@@ -53,9 +53,9 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   private def replaceWithGiven(v: Defn, replace: String): Patch = {
     val tokens = v.tokens
     val toModify = for {
-      it <- tokens.find(_.syntax == "implicit")
-      vt <- tokens.find(_.syntax == replace)
-    } yield Patch.removeToken(it) + Patch.replaceToken(vt, "given")
+      toReplace <- tokens.find(_.syntax == replace)
+      toRemove <- tokens.findToken(_.syntax == "implicit").map(_.tokensWithTailingSpace())
+    } yield Patch.removeTokens(toRemove) + Patch.replaceToken(toReplace, "given")
     toModify.getOrElse(Patch.empty)
   }
 
