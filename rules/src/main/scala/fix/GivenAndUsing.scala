@@ -18,16 +18,16 @@ package fix
 
 import scalafix.v1.{Patch, SemanticDocument, SemanticRule}
 
-import scala.meta.{Defn, Term}
+import scala.meta.{Defn, Mod, Term}
 
 class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
-      case v: Defn.Val if v.mods.exists(_.isModImplicit) =>
+      case v: Defn.Val if v.mods.exists(_.is[Mod.Implicit]) =>
         replaceWithGiven(v, "val")
       case d: Defn.Def =>
         List(
-          if (d.mods.exists(_.isModImplicit)) replaceWithGiven(d, "def") else Patch.empty,
+          if (d.mods.exists(_.is[Mod.Implicit])) replaceWithGiven(d, "def") else Patch.empty,
           replaceWithUsing(d.paramss)
         ).asPatch
       case c: Defn.Class =>
@@ -38,9 +38,9 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   private def replaceWithUsing(paramss: List[List[Term.Param]]) = {
     paramss.flatten
       .collectFirst {
-        case p: Term.Param if p.mods.exists(_.isModImplicit) =>
+        case p: Term.Param if p.mods.exists(_.is[Mod.Implicit]) =>
           p.mods
-            .find(_.isModImplicit)
+            .find(_.is[Mod.Implicit])
             .toList
             .flatMap(_.tokens)
             .headOption
