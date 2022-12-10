@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import scala.meta.{Defn, Mod}
+import scala.annotation.tailrec
+import scala.meta._
 import scalafix.XtensionScalafixProductInspect
 
 package object fix {
@@ -35,6 +36,25 @@ package object fix {
 
   def printDefn(t: Defn): Unit = {
     println(t.structureLabeled)
+  }
+
+  implicit class TokensExt(tokens: Tokens) {
+
+    def findToken(p: Token => Boolean): Option[Tokens] = {
+      val newTokens = tokens.dropWhile(!p(_)).take(1)
+      if (newTokens.length == 1) Some(newTokens)
+      else None
+    }
+
+    def tokensWithTailingSpace(): List[Token] = {
+      @tailrec
+      def run(pos: Int, ws: List[Token]): List[Token] = {
+        val next = pos + 1
+        if (next < tokens.tokens.length && tokens.tokens(next).is[Token.Space]) run(next, tokens.tokens(next) :: ws)
+        else ws
+      }
+      tokens.toList ++ run(tokens.start, Nil)
+    }
   }
 
 }
