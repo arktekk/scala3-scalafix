@@ -20,20 +20,6 @@ import scalafix.XtensionScalafixProductInspect
 
 package object fix {
 
-  implicit class ModExt(m: Mod) {
-    def isModImplicit: Boolean =
-      m match {
-        case _: Mod.Implicit => true
-        case _               => false
-      }
-
-    def isModCase: Boolean =
-      m match {
-        case _: Mod.Case => true
-        case _           => false
-      }
-  }
-
   def printDefn(t: Defn): Unit = {
     println(t.structureLabeled)
   }

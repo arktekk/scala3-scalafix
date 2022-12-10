@@ -71,7 +71,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
 object CaseClassWithCompanion {
   def unapply(t: Tree): Option[(Defn.Class, Defn.Object)] =
     t match {
-      case c @ Defn.Class(mods, cName, _, _, _) if mods.exists(_.isModCase) =>
+      case c @ Defn.Class(mods, cName, _, _, _) if mods.exists(_.is[Mod.Case]) =>
         c.parent.flatMap { st =>
           st.children.collectFirst {
             case o @ Defn.Object(_, oName, _) if cName.value == oName.value => c -> o
@@ -92,7 +92,7 @@ object SemiAutoDerived {
           if matchingType(o, typeName) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), g)
       case v @ Defn.Val(mods, _, Some(typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
-          if matchingType(o, typeName) && mods.exists(_.isModImplicit) && isSemiAuto(body) =>
+          if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), v)
     })
 
