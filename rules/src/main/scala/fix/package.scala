@@ -55,6 +55,16 @@ package object fix {
       }
       tokens.toList ++ run(tokens.start, Nil)
     }
+
+    def tokensWithLeadingSpace(): List[Token] = {
+      @tailrec
+      def run(pos: Int, ws: List[Token]): List[Token] = {
+        val next = pos - 1
+        if (next >= 0 && tokens.tokens(next).is[Token.Space]) run(next, tokens.tokens(next) :: ws)
+        else ws
+      }
+      run(tokens.start, Nil) ++ tokens.toList
+    }
   }
 
 }
