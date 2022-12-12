@@ -16,9 +16,9 @@
 
 package fix
 
-import scalafix.v1.{Patch, SemanticDocument, SemanticRule}
-
-import scala.meta.{Defn, Mod, Term}
+import scalafix.lint.LintSeverity
+import scalafix.v1.{Diagnostic, Patch, SemanticDocument, SemanticRule}
+import scala.meta._
 
 class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   override def fix(implicit doc: SemanticDocument): Patch = {
@@ -27,13 +27,19 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
         replaceWithGiven(v, "val")
       case d: Defn.Def =>
         List(
-          if (d.mods.exists(_.is[Mod.Implicit])) replaceWithGiven(d, "def") else Patch.empty,
+          if (d.mods.exists(_.is[Mod.Implicit]))
+            if (onlyImplicitParams(d)) replaceWithGiven(d, "def")
+            else Patch.lint(GivenFunctionWithArgs(d))
+          else Patch.empty,
           replaceWithUsing(d.paramss)
         ).asPatch
       case c: Defn.Class =>
         replaceWithUsing(c.ctor.paramss)
     }.asPatch
   }
+
+  private def onlyImplicitParams(d: Defn.Def): Boolean =
+    d.paramss.forall(_.forall(_.mods.exists(_.is[Mod.Implicit])))
 
   private def replaceWithUsing(paramss: List[List[Term.Param]]) = {
     paramss.flatten
@@ -59,4 +65,21 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
     toModify.getOrElse(Patch.empty)
   }
 
+}
+
+case class GivenFunctionWithArgs(func: Defn.Def) extends Diagnostic {
+  override def message: String =
+    """Unable to rewrite to `given` syntax because we found a function with a non implicit argument.""".stripMargin
+
+  override def position: Position = {
+    val fromArgs = for {
+      hPos <- func.paramss.headOption.flatMap(_.headOption).map(_.pos)
+      lPos <- func.paramss.lastOption.flatMap(_.lastOption).map(_.pos)
+    } yield
+      if (hPos == lPos) hPos
+      else Position.Range(hPos.input, hPos.startLine, hPos.startColumn, lPos.startLine, lPos.endColumn)
+    fromArgs.getOrElse(func.pos)
+  }
+
+  override def severity: LintSeverity = LintSeverity.Warning
 }

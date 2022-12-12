@@ -5,6 +5,8 @@ rule = GivenAndUsing
 package fix
 
 // format: off
+import scala.language.implicitConversions
+
 object GivenAndUsingTest {
   trait Foo[A]
 
@@ -15,5 +17,20 @@ object GivenAndUsingTest {
   class Bar[A](i:Int)(implicit foo: Foo[A], s: String) {
     def f(implicit iFoo: Foo[Int], sFoo: Foo[String]): Unit = ???
   }
+  trait Show[A] {
+    def show[A](a: A): String
+  }
+  object Show {
+    def apply[A](implicit ev: Show[A]): Show[A] = ev
+  }
+  case class Magnet(s: String)
+  implicit def showWithArg[A: Show](a:A): Magnet = Magnet(Show[A].show(a))/* assert: GivenAndUsing
+                                    ^^^
+  Unable to rewrite to `given` syntax because we found a function with a non implicit argument.
+*/
+  implicit def showWithArgs[A: Show](a: A, s: String): Magnet = Magnet(Show[A].show(a))/* assert: GivenAndUsing
+                                     ^^^^^^^^^^^^^^^
+  Unable to rewrite to `given` syntax because we found a function with a non implicit argument.
+  */
 }
 // format: on
