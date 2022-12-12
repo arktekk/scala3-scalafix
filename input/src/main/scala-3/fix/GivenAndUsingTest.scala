@@ -32,5 +32,8 @@ object GivenAndUsingTest {
                                      ^^^^^^^^^^^^^^^
   Unable to rewrite to `given` syntax because we found a function with a non implicit argument.
   */
+  def untypedImplicit[A](foo: Foo[A]): Unit = {
+    implicit val fooOfA = foo// assert: GivenAndUsing
+  }
 }
 // format: on
