@@ -24,7 +24,8 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect {
       case v: Defn.Val if v.mods.exists(_.is[Mod.Implicit]) =>
-        replaceWithGiven(v, "val")
+        if (v.decltpe.isDefined) replaceWithGiven(v, "val")
+        else Patch.lint(GivenValWithoutDeclaredType(v))
       case d: Defn.Def =>
         List(
           if (d.mods.exists(_.is[Mod.Implicit]))
@@ -67,6 +68,14 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
 
 }
 
+case class GivenValWithoutDeclaredType(value: Defn.Val) extends Diagnostic {
+  override def severity: LintSeverity = LintSeverity.Warning
+
+  override def message: String =
+    s"The implicit val need to be typed to be rewritten to `given` syntax."
+
+  override def position: _root_.scala.meta.Position = value.pos
+}
 case class GivenFunctionWithArgs(func: Defn.Def) extends Diagnostic {
   override def message: String =
     """Unable to rewrite to `given` syntax because we found a function with a non implicit argument.""".stripMargin

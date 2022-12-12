@@ -22,5 +22,8 @@ object GivenAndUsingTest {
   case class Magnet(s: String)
   implicit def showWithArg[A: Show](a:A): Magnet = Magnet(Show[A].show(a))
   implicit def showWithArgs[A: Show](a: A, s: String): Magnet = Magnet(Show[A].show(a))
+  def untypedImplicit[A](foo: Foo[A]): Unit = {
+    implicit val fooOfA = foo
+  }
 }
 // format: on
