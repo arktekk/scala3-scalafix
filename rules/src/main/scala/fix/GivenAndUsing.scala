@@ -28,8 +28,8 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
         else Patch.lint(GivenValWithoutDeclaredType(v))
       case d: Defn.Def =>
         List(
-          if (d.mods.exists(_.is[Mod.Implicit]))
-            if (onlyImplicitParams(d)) replaceWithGiven(d, "def")
+          if (d.mods.exists(m => m.is[Mod.Implicit]))
+            if (onlyImplicitOrUsingParams(d)) replaceWithGiven(d, "def")
             else Patch.lint(GivenFunctionWithArgs(d))
           else Patch.empty,
           replaceWithUsing(d.paramss)
@@ -39,8 +39,8 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
     }.asPatch
   }
 
-  private def onlyImplicitParams(d: Defn.Def): Boolean =
-    d.paramss.forall(_.forall(_.mods.exists(_.is[Mod.Implicit])))
+  private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
+    d.paramss.forall(_.forall(_.mods.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
 
   private def replaceWithUsing(paramss: List[List[Term.Param]]) = {
     paramss.flatten
