@@ -12,6 +12,7 @@ object GivenAndUsingTest {
 
   implicit val fooInt: Foo[Int] = new Foo[Int] {}
   implicit def fooString: Foo[String] = new Foo[String] {}
+  implicit def fooParam[A: Foo]: Foo[List[A]] = new Foo[List[A]] {}
   implicit def foo(implicit fooInt: Foo[Int]): Foo[Long] = new Foo[Long] {}
   implicit def fooUsing(using fooInt: Foo[Int]): Foo[Long] = new Foo[Long] {}
 

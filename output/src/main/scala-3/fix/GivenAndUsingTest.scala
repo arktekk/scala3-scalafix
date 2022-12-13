@@ -8,6 +8,7 @@ object GivenAndUsingTest {
 
   given fooInt: Foo[Int] = new Foo[Int] {}
   given fooString: Foo[String] = new Foo[String] {}
+  given fooParam[A: Foo]: Foo[List[A]] = new Foo[List[A]] {}
   given foo(using fooInt: Foo[Int]): Foo[Long] = new Foo[Long] {}
   given fooUsing(using fooInt: Foo[Int]): Foo[Long] = new Foo[Long] {}
 
