@@ -17,55 +17,78 @@
 package fix
 
 import scalafix.lint.LintSeverity
-import scalafix.v1.{Diagnostic, Patch, SemanticDocument, SemanticRule}
+import scalafix.v1._
 import scala.meta._
 
 class GivenAndUsing extends SemanticRule("GivenAndUsing") {
+
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect {
+    val givenAndUsingPass = doc.tree.collect[List[APatch]] {
       case v: Defn.Val if v.mods.exists(_.is[Mod.Implicit]) =>
-        if (v.decltpe.isDefined) replaceWithGiven(v, "val")
-        else Patch.lint(GivenValWithoutDeclaredType(v))
+        if (v.decltpe.isDefined) replaceWithGiven(v, "val") :: Nil
+        else APatch.Lint(GivenValWithoutDeclaredType(v)) :: Nil
       case d: Defn.Def =>
         List(
           if (d.mods.exists(m => m.is[Mod.Implicit]))
             if (onlyImplicitOrUsingParams(d)) replaceWithGiven(d, "def")
-            else Patch.lint(GivenFunctionWithArgs(d))
-          else Patch.empty,
+            else APatch.Lint(GivenFunctionWithArgs(d))
+          else APatch.Empty,
           replaceWithUsing(d.paramss)
-        ).asPatch
+        )
       case c: Defn.Class =>
-        replaceWithUsing(c.ctor.paramss)
+        replaceWithUsing(c.ctor.paramss) :: Nil
+    }
+
+    val givenImports = givenAndUsingPass.flatMap(_.collect { case APatch.Given(_, symbol) => symbol.owner }).toSet
+    val importPath = doc.tree.collect {
+      case i @ Importer(_, importees)
+          if importees.exists(_.is[Importee.Wildcard]) && givenImports.contains(i.ref.symbol) =>
+        if (importees.length == 1) Patch.addAround(importees.head, "{ given, ", " }")
+        else if (importees.exists(_.is[Importee.GivenAll])) Patch.empty
+        else Patch.addLeft(importees.head, "given")
     }.asPatch
+    givenAndUsingPass.flatMap(_.map(_.patch)).asPatch + importPath
   }
 
   private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
     d.paramss.forall(_.forall(_.mods.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
 
-  private def replaceWithUsing(paramss: List[List[Term.Param]]) = {
+  private def replaceWithUsing(paramss: List[List[Term.Param]]): APatch = {
     paramss.flatten
       .collectFirst {
         case p: Term.Param if p.mods.exists(_.is[Mod.Implicit]) =>
-          p.mods
+          val pp = p.mods
             .find(_.is[Mod.Implicit])
             .toList
             .flatMap(_.tokens)
             .headOption
             .map(t => Patch.replaceToken(t, "using"))
             .asPatch
+          APatch.Using(pp)
       }
-      .getOrElse(Patch.empty)
+      .getOrElse(APatch.Empty)
   }
 
-  private def replaceWithGiven(v: Defn, replace: String): Patch = {
+  private def replaceWithGiven(v: Defn, replace: String)(implicit doc: SemanticDocument): APatch = {
     val tokens = v.tokens
     val toModify = for {
       toReplace <- tokens.find(_.syntax == replace)
       toRemove <- tokens.findToken(_.syntax == "implicit").map(_.tokensWithTailingSpace())
-    } yield Patch.removeTokens(toRemove) + Patch.replaceToken(toReplace, "given")
-    toModify.getOrElse(Patch.empty)
+    } yield APatch.Given(Patch.removeTokens(toRemove) + Patch.replaceToken(toReplace, "given"), v.symbol)
+    toModify.getOrElse(APatch.Empty)
   }
 
+}
+
+sealed trait APatch {
+  def patch: Patch
+}
+
+object APatch {
+  case object Empty extends APatch { val patch: Patch = Patch.empty }
+  case class Lint(diagnostic: Diagnostic) extends APatch { def patch: Patch = Patch.lint(diagnostic) }
+  case class Using(patch: Patch) extends APatch
+  case class Given(patch: Patch, symbol: Symbol) extends APatch
 }
 
 case class GivenValWithoutDeclaredType(value: Defn.Val) extends Diagnostic {

@@ -3,6 +3,12 @@ package fix
 // format: off
 import scala.language.implicitConversions
 
+trait Show[A] {
+  def show[A](a: A): String
+}
+object Show {
+  def apply[A](using ev: Show[A]): Show[A] = ev
+}
 object GivenAndUsingTest {
   trait Foo[A]
 
@@ -15,17 +21,27 @@ object GivenAndUsingTest {
   class Bar[A](i:Int)(using foo: Foo[A], s: String) {
     def f(using iFoo: Foo[Int], sFoo: Foo[String]): Unit = ???
   }
-  trait Show[A] {
-    def show[A](a: A): String
-  }
-  object Show {
-    def apply[A](using ev: Show[A]): Show[A] = ev
-  }
   case class Magnet(s: String)
   implicit def showWithArg[A: Show](a:A): Magnet = Magnet(Show[A].show(a))
   implicit def showWithArgs[A: Show](a: A, s: String): Magnet = Magnet(Show[A].show(a))
   def untypedImplicit[A](foo: Foo[A]): Unit = {
     implicit val fooOfA = foo
   }
+}
+class MyClass
+class MyClass2
+object ToImport {
+  given myClass: MyClass = ???
+  given myClass2: MyClass2 = ???
+}
+object ModifyImport {
+  import ToImport.{ given, * }
+  def useMyClass(using myClass: MyClass): String = ???
+  val mc = useMyClass
+}
+object DoNotModifyImport {
+  import ToImport.{ given, *}
+  def useMyClass(using myClass: MyClass2): String = ???
+  val mc = useMyClass
 }
 // format: on
