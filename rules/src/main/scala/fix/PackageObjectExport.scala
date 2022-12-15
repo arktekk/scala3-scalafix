@@ -21,18 +21,11 @@ import scala.meta._
 
 class PackageObjectExport extends SemanticRule("PackageObjectExport") {
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case pkg @ Pkg.Object(_, name, _) =>
-      val tokens = pkg.tokens
-      val replaceName = tokens
-        .findToken(_.text == name.value)
-        .map(t => Patch.replaceToken(t.head, s"`${t.head.text}`"))
-        .getOrElse(Patch.empty)
-      val packagePatch = tokens.findToken(_.is[Token.KwPackage]) match {
-        case Some(pkgToken) =>
-          Patch.addLeft(pkg, s"package $name\n") + Patch.replaceToken(pkgToken.head, "private") + replaceName
-        case None => Patch.empty
-      }
-      packagePatch + Patch.addRight(pkg, s"\nexport `${name.value}`.*")
+    doc.tree.collect { case pkg@Pkg.Object(_, name, template) =>
+      val newPkg = Pkg(name, List(Term.Block(template.stats)))
+      val newTerm = Term.Name(name.value + "Impl")
+      val newObject = q"private object $newTerm".copy(templ = template.copy(stats = Nil))
+      Patch.addLeft(pkg, newPkg.syntax + "\n") + Patch.replaceTree(pkg, "\n" + newObject.syntax) + Patch.addRight(pkg, s"\nexport ${newTerm.value}.*")
     }.asPatch
   }
 }
