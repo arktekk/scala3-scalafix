@@ -21,11 +21,14 @@ import scala.meta._
 
 class PackageObjectExport extends SemanticRule("PackageObjectExport") {
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case pkg@Pkg.Object(_, name, template) =>
+    doc.tree.collect { case pkg @ Pkg.Object(_, name, template) =>
       val newPkg = Pkg(name, List(Term.Block(template.stats)))
       val newTerm = Term.Name(name.value + "Impl")
       val newObject = q"private object $newTerm".copy(templ = template.copy(stats = Nil))
-      Patch.addLeft(pkg, newPkg.syntax + "\n") + Patch.replaceTree(pkg, "\n" + newObject.syntax) + Patch.addRight(pkg, s"\nexport ${newTerm.value}.*")
+      Patch.addLeft(pkg, newPkg.syntax + "\n") + Patch.replaceTree(pkg, "\n" + newObject.syntax) + Patch.addRight(
+        pkg,
+        s"\nexport ${newTerm.value}.*"
+      )
     }.asPatch
   }
 }

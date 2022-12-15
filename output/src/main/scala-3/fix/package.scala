@@ -1,5 +1,6 @@
 package fix
 
+// format: off
 package foo
 {
   def zzz: String = ???
