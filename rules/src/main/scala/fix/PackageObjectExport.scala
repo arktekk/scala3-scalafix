@@ -22,7 +22,7 @@ import scala.meta._
 class PackageObjectExport extends SemanticRule("PackageObjectExport") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case pkg@Pkg.Object(_, name, _) =>
+    doc.tree.collect { case pkg @ Pkg.Object(_, name, _) =>
       val tokens = pkg.tokens
       val maybeSplit = tokens.splitOn(t => t.is[Token.Colon] || t.is[Token.LeftBrace])
       val newTerm = name.value + "Impl"
@@ -40,7 +40,8 @@ class PackageObjectExport extends SemanticRule("PackageObjectExport") {
               Patch.addRight(restTokens.last, "\n\n" + privatePackage)
             case None => Patch.empty
           }
-          val packagePatch = Patch.removeTokens(objectTokens) + Patch.addLeft(objectTokens.head, s"package ${name.value} ")
+          val packagePatch =
+            Patch.removeTokens(objectTokens) + Patch.addLeft(objectTokens.head, s"package ${name.value} ")
           packagePatch + extendsObject
         case None => Patch.empty
       }
