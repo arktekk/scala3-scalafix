@@ -20,15 +20,31 @@ import scalafix.v1._
 import scala.meta._
 
 class PackageObjectExport extends SemanticRule("PackageObjectExport") {
+
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case pkg @ Pkg.Object(_, name, template) =>
-      val newPkg = Pkg(name, List(Term.Block(template.stats)))
-      val newTerm = Term.Name(name.value + "Impl")
-      val newObject = q"private object $newTerm".copy(templ = template.copy(stats = Nil))
-      Patch.addLeft(pkg, newPkg.syntax + "\n") + Patch.replaceTree(pkg, "\n" + newObject.syntax) + Patch.addRight(
-        pkg,
-        s"\nexport ${newTerm.value}.*"
-      )
+    doc.tree.collect { case pkg@Pkg.Object(_, name, _) =>
+      val tokens = pkg.tokens
+      val maybeSplit = tokens.splitOn(t => t.is[Token.Colon] || t.is[Token.LeftBrace])
+      val newTerm = name.value + "Impl"
+
+      maybeSplit match {
+        case Some((objectTokens, restTokens)) =>
+          val maybeExtends = objectTokens.splitOn(t => t.is[Token.KwExtends])
+          val extendsObject = maybeExtends match {
+            case Some((_, extendsTokens)) =>
+              val privatePackage =
+                s"""|private object ${newTerm} ${extendsTokens.syntax.trim}
+                    |export ${newTerm}.*
+                    |""".stripMargin
+
+              Patch.addRight(restTokens.last, "\n\n" + privatePackage)
+            case None => Patch.empty
+          }
+          val packagePatch = Patch.removeTokens(objectTokens) + Patch.addLeft(objectTokens.head, s"package ${name.value} ")
+          packagePatch + extendsObject
+        case None => Patch.empty
+      }
+
     }.asPatch
   }
 }

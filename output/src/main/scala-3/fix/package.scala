@@ -1,8 +1,7 @@
 package fix
 
 // format: off
-package foo
-{
+package foo {
   def zzz: String = ???
 }
 
