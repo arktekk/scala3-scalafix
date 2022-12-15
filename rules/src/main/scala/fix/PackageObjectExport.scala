@@ -22,7 +22,7 @@ import scala.meta._
 class PackageObjectExport extends SemanticRule("PackageObjectExport") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case pkg@Pkg.Object(_, name, _) =>
+    doc.tree.collect { case pkg @ Pkg.Object(_, name, _) =>
       val tokens = pkg.tokens
       val maybeSplit = tokens.splitOn(t => t.is[Token.Colon] || t.is[Token.LeftBrace])
       val newTerm = name.value + "Impl"
@@ -30,7 +30,7 @@ class PackageObjectExport extends SemanticRule("PackageObjectExport") {
       maybeSplit match {
         case Some((objectTokens, restTokens)) =>
           val isNewSyntax = restTokens.head.is[Token.Colon]
-          //should be configurable
+          // should be configurable
           val indent = if (isNewSyntax) "  " else ""
           val maybeExtends = objectTokens.splitOn(t => t.is[Token.KwExtends])
           val extendsObject = maybeExtends match {
