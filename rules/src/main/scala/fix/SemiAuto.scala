@@ -91,12 +91,12 @@ object SemiAutoDerived {
       case g @ Defn.GivenAlias(_, _, _, _, typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil), body)
           if matchingType(o, typeName) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), g)
-      case v @ Defn.Val(mods, _, Some(Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
+      case v @ Defn.Val(mods, _, Some(applied @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
           if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
-        SemiAutoDerived(findSymbolFromSignature(v).normalized.value.dropRight(1), v)
-      case v @ Defn.Def(mods, _, _, _, Some(Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
+        SemiAutoDerived(findSymbolFromSignature(v).getOrElse(applied.symbol).normalized.value.dropRight(1), v)
+      case v @ Defn.Def(mods, _, _, _, Some(applied @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
           if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
-        SemiAutoDerived(findSymbolFromSignature(v).normalized.value.dropRight(1), v)
+        SemiAutoDerived(findSymbolFromSignature(v).getOrElse(applied.symbol).normalized.value.dropRight(1), v)
     })
 
   private def matchingType(o: Defn.Object, typeName: Type.Name): Boolean =
@@ -117,7 +117,6 @@ object SemiAutoDerived {
           Some(symbol)
         case _ => None
       })
-      .getOrElse(sym)
   }
 }
 
