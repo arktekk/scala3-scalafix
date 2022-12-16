@@ -20,7 +20,7 @@ import scalafix.XtensionScalafixProductInspect
 
 package object fix {
 
-  def printDefn(t: Defn): Unit = {
+  def printDefn(t: Tree): Unit = {
     println(t.structureLabeled)
   }
 

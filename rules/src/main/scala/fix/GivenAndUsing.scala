@@ -18,6 +18,8 @@ package fix
 
 import scalafix.lint.LintSeverity
 import scalafix.v1._
+
+import scala.annotation.tailrec
 import scala.meta._
 
 class GivenAndUsing extends SemanticRule("GivenAndUsing") {
@@ -40,20 +42,27 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
     }
 
     val givenImports = givenAndUsingPass.flatMap(_.collect { case APatch.Given(_, symbol) => symbol.owner }).toSet
-    val importPath = doc.tree.collect {
+    val usingRefs = givenAndUsingPass.flatMap(_.collect { case APatch.Using(_, symbol) => symbol }).toSet
+
+    val importAndUsingPass = doc.tree.collect {
       case i @ Importer(_, importees)
           if importees.exists(_.is[Importee.Wildcard]) && givenImports.contains(i.ref.symbol) =>
         if (importees.length == 1) Patch.addAround(importees.head, "{ given, ", " }")
         else if (importees.exists(_.is[Importee.GivenAll])) Patch.empty
         else Patch.addLeft(importees.head, "given")
+
+      case ApplyImplicitArgs(symbol, args) if usingRefs.contains(symbol) =>
+        args.headOption.map(h => Patch.addLeft(h, "using ")).getOrElse(Patch.empty)
+
     }.asPatch
-    givenAndUsingPass.flatMap(_.map(_.patch)).asPatch + importPath
+
+    givenAndUsingPass.flatMap(_.map(_.patch)).asPatch + importAndUsingPass
   }
 
   private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
     d.paramss.forall(_.forall(_.mods.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
 
-  private def replaceWithUsing(paramss: List[List[Term.Param]]): APatch = {
+  private def replaceWithUsing(paramss: List[List[Term.Param]])(implicit doc: SemanticDocument): APatch = {
     paramss.flatten
       .collectFirst {
         case p: Term.Param if p.mods.exists(_.is[Mod.Implicit]) =>
@@ -64,7 +73,7 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
             .headOption
             .map(t => Patch.replaceToken(t, "using"))
             .asPatch
-          APatch.Using(pp)
+          APatch.Using(pp, p.symbol.owner)
       }
       .getOrElse(APatch.Empty)
   }
@@ -84,10 +93,38 @@ sealed trait APatch {
   def patch: Patch
 }
 
+object ApplyImplicitArgs {
+
+  @tailrec
+  private def applyTermChain(term: Term, args: List[List[Term]]): List[List[Term]] = {
+    term match {
+      case t: Term.Apply => applyTermChain(t.fun, t.args :: args)
+      case _             => args
+    }
+  }
+
+  def unapply(tree: Tree)(implicit doc: SemanticDocument): Option[(Symbol, List[Term])] =
+    tree match {
+      case term: Term.Apply =>
+        term.symbol.info
+          .map(_.signature)
+          .collect { case m: MethodSignature => m }
+          .map(_.parameterLists)
+          .filter(_.lastOption.exists(_.headOption.exists(_.symbol.info.exists(_.isImplicit))))
+          .flatMap { params =>
+            val argsList = applyTermChain(term, List.empty)
+            if (params.length == argsList.length) {
+              argsList.lastOption.map(term.symbol -> _)
+            } else None
+          }
+      case _ => None
+    }
+}
+
 object APatch {
   case object Empty extends APatch { val patch: Patch = Patch.empty }
   case class Lint(diagnostic: Diagnostic) extends APatch { def patch: Patch = Patch.lint(diagnostic) }
-  case class Using(patch: Patch) extends APatch
+  case class Using(patch: Patch, symbol: Symbol) extends APatch
   case class Given(patch: Patch, symbol: Symbol) extends APatch
 }
 

@@ -46,8 +46,11 @@ object ToImport {
 }
 object ModifyImport {
   import ToImport.*
-  def useMyClass(implicit myClass: MyClass): String = ???
-  val mc = useMyClass
+  def useMyClass1(implicit myClass: MyClass): String = ???
+  def useMyClass2(i: Int)(implicit myClass: MyClass): String = ???
+  val mc1 = useMyClass1
+  val mc2 = useMyClass1(new MyClass)
+  val mc3 = useMyClass2(1)(new MyClass)
 }
 object DoNotModifyImport {
   import ToImport.{ given, *}
