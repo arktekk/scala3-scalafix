@@ -24,20 +24,17 @@ class PackageObjectExport extends SemanticRule("PackageObjectExport") {
   override def fix(implicit doc: SemanticDocument): Patch = {
     doc.tree.collect { case pkg @ Pkg.Object(_, name, _) =>
       val tokens = pkg.tokens
-      val maybeSplit = tokens.splitOn(t => t.is[Token.Colon] || t.is[Token.LeftBrace])
+      val maybeSplit = tokens.splitOn(t => t.is[Token.LeftBrace])
       val newTerm = name.value + "Impl"
 
       maybeSplit match {
         case Some((objectTokens, restTokens)) =>
-          val isNewSyntax = restTokens.head.is[Token.Colon]
-          // should be configurable
-          val indent = if (isNewSyntax) "  " else ""
           val maybeExtends = objectTokens.splitOn(t => t.is[Token.KwExtends])
           val extendsObject = maybeExtends match {
             case Some((_, extendsTokens)) =>
               val privatePackage =
-                s"""|${indent}private object ${newTerm} ${extendsTokens.syntax.trim}
-                    |${indent}export ${newTerm}.*
+                s"""|private object ${newTerm} ${extendsTokens.syntax.trim}
+                    |export ${newTerm}.*
                     |""".stripMargin
               Patch.addRight(restTokens.last, "\n\n" + privatePackage)
             case None => Patch.empty
