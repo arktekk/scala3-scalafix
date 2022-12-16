@@ -32,6 +32,11 @@ package object fix {
       else None
     }
 
+    def splitOn(p: Token => Boolean): Option[(Tokens, Tokens)] = {
+      val idx = tokens.indexWhere(p)
+      if (idx == -1) None else Some(tokens.splitAt(idx))
+    }
+
     def tokensWithTailingSpace(): List[Token] = {
       @tailrec
       def run(pos: Int, ws: List[Token]): List[Token] = {
@@ -39,6 +44,7 @@ package object fix {
         if (next < tokens.tokens.length && tokens.tokens(next).is[Token.Space]) run(next, tokens.tokens(next) :: ws)
         else ws
       }
+
       tokens.toList ++ run(tokens.start, Nil)
     }
 
@@ -49,6 +55,7 @@ package object fix {
         if (next >= 0 && tokens.tokens(next).is[Token.Space]) run(next, tokens.tokens(next) :: ws)
         else ws
       }
+
       run(tokens.start, Nil) ++ tokens.toList
     }
   }
