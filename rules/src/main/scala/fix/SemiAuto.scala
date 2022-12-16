@@ -111,12 +111,11 @@ object SemiAutoDerived {
 
   private def findSymbolFromSignature(defn: Defn)(implicit doc: SemanticDocument) = {
     val sym = defn.symbol
-    sym.info
-      .flatMap(_.signature match {
-        case ValueSignature(TypeRef(_, symbol, _)) =>
-          Some(symbol)
-        case _ => None
-      })
+    sym.info.map(_.signature).flatMap {
+      case ValueSignature(TypeRef(_, symbol, _)) =>
+        Some(symbol)
+      case _ => None
+    }
   }
 }
 
