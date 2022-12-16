@@ -16,10 +16,10 @@
 
 package fix
 
+import fix.matchers.ApplyImplicitArgs
 import scalafix.lint.LintSeverity
 import scalafix.v1._
 
-import scala.annotation.tailrec
 import scala.meta._
 
 class GivenAndUsing extends SemanticRule("GivenAndUsing") {
@@ -92,35 +92,6 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
 sealed trait APatch {
   def patch: Patch
 }
-
-object ApplyImplicitArgs {
-
-  @tailrec
-  private def applyTermChain(term: Term, args: List[List[Term]]): List[List[Term]] = {
-    term match {
-      case t: Term.Apply => applyTermChain(t.fun, t.args :: args)
-      case _             => args
-    }
-  }
-
-  def unapply(tree: Tree)(implicit doc: SemanticDocument): Option[(Symbol, List[Term])] =
-    tree match {
-      case term: Term.Apply =>
-        term.symbol.info
-          .map(_.signature)
-          .collect { case m: MethodSignature => m }
-          .map(_.parameterLists)
-          .filter(_.lastOption.exists(_.headOption.exists(_.symbol.info.exists(_.isImplicit))))
-          .flatMap { params =>
-            val argsList = applyTermChain(term, List.empty)
-            if (params.length == argsList.length) {
-              argsList.lastOption.map(term.symbol -> _)
-            } else None
-          }
-      case _ => None
-    }
-}
-
 object APatch {
   case object Empty extends APatch { val patch: Patch = Patch.empty }
   case class Lint(diagnostic: Diagnostic) extends APatch { def patch: Patch = Patch.lint(diagnostic) }

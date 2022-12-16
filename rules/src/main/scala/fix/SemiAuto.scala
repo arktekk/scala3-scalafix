@@ -16,6 +16,7 @@
 
 package fix
 
+import fix.matchers._
 import metaconfig.Configured
 import scalafix.lint.LintSeverity
 import scalafix.v1.{Patch, _}
@@ -64,57 +65,6 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
     companion.templ.children.count {
       case Self(Name.Anonymous(), None) => false
       case _                            => true
-    }
-  }
-}
-
-object CaseClassWithCompanion {
-  def unapply(t: Tree): Option[(Defn.Class, Defn.Object)] =
-    t match {
-      case c @ Defn.Class(mods, cName, _, _, _) if mods.exists(_.is[Mod.Case]) =>
-        c.parent.flatMap { st =>
-          st.children.collectFirst {
-            case o @ Defn.Object(_, oName, _) if cName.value == oName.value => c -> o
-          }
-        }
-      case _ => None
-    }
-
-}
-
-case class SemiAutoDerived(deriveType: String, defn: Defn)
-
-object SemiAutoDerived {
-
-  def unapply(o: Defn.Object)(implicit doc: SemanticDocument): Option[List[SemiAutoDerived]] =
-    nonEmptyList(o.templ.stats.collect {
-      case g @ Defn.GivenAlias(_, _, _, _, typeApply @ Type.Apply(_, (typeName: Type.Name) :: Nil), body)
-          if matchingType(o, typeName) && isSemiAuto(body) =>
-        SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), g)
-      case v @ Defn.Val(mods, _, Some(applied @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
-          if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
-        SemiAutoDerived(findSymbolFromSignature(v).getOrElse(applied.symbol).normalized.value.dropRight(1), v)
-      case v @ Defn.Def(mods, _, _, _, Some(applied @ Type.Apply(_, (typeName: Type.Name) :: Nil)), body)
-          if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
-        SemiAutoDerived(findSymbolFromSignature(v).getOrElse(applied.symbol).normalized.value.dropRight(1), v)
-    })
-
-  private def matchingType(o: Defn.Object, typeName: Type.Name): Boolean =
-    typeName.value == o.name.value
-
-  private def isSemiAuto(t: Term)(implicit doc: SemanticDocument) = {
-    t.symbol.normalized.value.contains(".semiauto.") || t.symbol.normalized.value.contains("derived")
-  }
-
-  private def nonEmptyList[A](l: List[A]): Option[List[A]] =
-    if (l.isEmpty) None else Some(l)
-
-  private def findSymbolFromSignature(defn: Defn)(implicit doc: SemanticDocument) = {
-    val sym = defn.symbol
-    sym.info.map(_.signature).flatMap {
-      case ValueSignature(TypeRef(_, symbol, _)) =>
-        Some(symbol)
-      case _ => None
     }
   }
 }
