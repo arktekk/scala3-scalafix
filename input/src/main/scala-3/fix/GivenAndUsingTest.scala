@@ -57,4 +57,12 @@ object DoNotModifyImport {
   def useMyClass(implicit myClass: MyClass2): String = ???
   val mc = useMyClass
 }
+class ClassWithTwoImplicitArgs(i: Int, implicit val keepImplicit: Boolean, s: String)(implicit ec: scala.concurrent.ExecutionContext)/* assert: GivenAndUsing
+                                       ^^^^^^^^
+  Not allowed to use `using` because it's defined in the next argument block.
+*/
+class ClassWithImplicitAndGivenArgs(i: Int, implicit val keepImplicit: Boolean, s: String)(using ec: scala.concurrent.ExecutionContext)/* assert: GivenAndUsing
+                                            ^^^^^^^^
+  Not allowed to use `using` because it's defined in the next argument block.
+*/
 // format: on

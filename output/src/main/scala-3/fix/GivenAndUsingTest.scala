@@ -47,4 +47,6 @@ object DoNotModifyImport {
   def useMyClass(using myClass: MyClass2): String = ???
   val mc = useMyClass
 }
+class ClassWithTwoImplicitArgs(i: Int, implicit val keepImplicit: Boolean, s: String)(using ec: scala.concurrent.ExecutionContext)
+class ClassWithImplicitAndGivenArgs(i: Int, implicit val keepImplicit: Boolean, s: String)(using ec: scala.concurrent.ExecutionContext)
 // format: on

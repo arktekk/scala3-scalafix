@@ -34,11 +34,10 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
           if (d.mods.exists(m => m.is[Mod.Implicit]))
             if (onlyImplicitOrUsingParams(d)) replaceWithGiven(d, "def")
             else APatch.Lint(GivenFunctionWithArgs(d))
-          else APatch.Empty,
-          replaceWithUsing(d.paramss)
-        )
+          else APatch.Empty
+        ) ++ replaceWithUsing(d.paramss)
       case c: Defn.Class =>
-        replaceWithUsing(c.ctor.paramss) :: Nil
+        replaceWithUsing(c.ctor.paramss)
     }
 
     val givenImports = givenAndUsingPass.flatMap(_.collect { case APatch.Given(_, symbol) => symbol.owner }).toSet
@@ -62,10 +61,10 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
     d.paramss.forall(_.forall(_.mods.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
 
-  private def replaceWithUsing(paramss: List[List[Term.Param]])(implicit doc: SemanticDocument): APatch = {
-    paramss.flatten
+  private def replaceWithUsing(paramss: List[List[Term.Param]])(implicit doc: SemanticDocument): List[APatch] = {
+    val usingPatch = paramss.reverse.flatten
       .collectFirst {
-        case p: Term.Param if p.mods.exists(_.is[Mod.Implicit]) =>
+        case p: Term.Param if p.mods.exists(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using]) =>
           val pp = p.mods
             .find(_.is[Mod.Implicit])
             .toList
@@ -75,7 +74,17 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
             .asPatch
           APatch.Using(pp, p.symbol.owner)
       }
-      .getOrElse(APatch.Empty)
+    val lintPatchers = paramss.flatMap(_.collectFirst {
+      case p: Term.Param if p.mods.exists(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using]) =>
+        p.mods.find(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using])
+    }.toList.flatten) match {
+      case Nil      => List.empty
+      case _ :: Nil => List.empty
+      case other =>
+        val crateLintOf = if (other.exists(_.is[Mod.Using])) other.filter(_.isNot[Mod.Using]) else other.dropRight(1)
+        crateLintOf.map(mod => APatch.Lint(MultipleImplicits(mod.pos)))
+    }
+    lintPatchers ++ usingPatch
   }
 
   private def replaceWithGiven(v: Defn, replace: String)(implicit doc: SemanticDocument): APatch = {
@@ -107,6 +116,16 @@ case class GivenValWithoutDeclaredType(value: Defn.Val) extends Diagnostic {
 
   override def position: _root_.scala.meta.Position = value.pos
 }
+
+case class MultipleImplicits(pos: _root_.scala.meta.Position) extends Diagnostic {
+  override def severity: LintSeverity = LintSeverity.Warning
+
+  override def message: String =
+    "Not allowed to use `using` because it's defined in the next argument block."
+
+  override def position: _root_.scala.meta.Position = pos
+}
+
 case class GivenFunctionWithArgs(func: Defn.Def) extends Diagnostic {
   override def message: String =
     """Unable to rewrite to `given` syntax because we found a function with a non implicit argument.""".stripMargin
