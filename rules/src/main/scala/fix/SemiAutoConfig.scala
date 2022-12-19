@@ -51,7 +51,8 @@ object SemiAutoConfig {
       SemiAutoConfig.Rewrite("doobie.util.Read", "Read"),
       SemiAutoConfig.Rewrite("doobie.Types.Read", "Read"),
       SemiAutoConfig.Rewrite("doobie.util.Write", "Write"),
-      SemiAutoConfig.Rewrite("doobie.Types.Write", "Write")
+      SemiAutoConfig.Rewrite("doobie.Types.Write", "Write"),
+      SemiAutoConfig.Rewrite("doobie.postgres.Text", "Text")
     )
   )
 

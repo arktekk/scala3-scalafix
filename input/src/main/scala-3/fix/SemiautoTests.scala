@@ -17,7 +17,7 @@ object SemiAutoTests {
 
   case class DeriveEncoder(name: String, age: Int)
   object DeriveEncoder {
-    implicit val encoder: Encoder.AsObject[DeriveEncoder] = deriveEncoder
+    implicit def encoder: Encoder.AsObject[DeriveEncoder] = deriveEncoder
   }
 
   case class DeriveEncoderAndKeepCompanion(name: String, age: Int)
