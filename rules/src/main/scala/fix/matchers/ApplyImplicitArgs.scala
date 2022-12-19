@@ -35,13 +35,23 @@ object ApplyImplicitArgs {
       case term: Term.Apply =>
         term.symbol.info
           .map(_.signature)
-          .collect { case m: MethodSignature => m }
-          .map(_.parameterLists)
+          .collect {
+            case m: MethodSignature =>
+              m.parameterLists
+            case c: ClassSignature =>
+              c.declarations
+                .map(_.signature)
+                .collect { case m: MethodSignature => m.parameterLists }
+                .flatten
+          }
           .filter(_.lastOption.exists(_.headOption.exists(_.symbol.info.exists(_.isImplicit))))
           .flatMap { params =>
             val argsList = applyTermChain(term, List.empty)
             if (params.length == argsList.length) {
-              argsList.lastOption.map(term.symbol -> _)
+              for {
+                sym <- params.lastOption.flatMap(_.headOption.map(_.symbol.owner))
+                arg <- argsList.lastOption
+              } yield sym -> arg
             } else None
           }
       case _ => None
