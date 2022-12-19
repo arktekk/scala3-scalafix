@@ -2,7 +2,7 @@
 
 ## SemiAuto
 
-Rewrite implicit derived values to scala 3 syntax
+Rewrite implicit derived values to scala 3 syntax. Missing a bundle/library? Please open a report it as a bug or submit a pull-request.
 
 **Configuration:**
 
@@ -34,7 +34,7 @@ case class Person(name: String) derives Codec.AsObject
 
 ## GivenAndUsing
 
-Rewrite implicit keywords to given and using.
+Rewrite implicit keywords to given and using. **Please note that this rule might introduce some compile errors.**
 
 **Example:**
 ```scala
@@ -57,7 +57,7 @@ class Printer(using console: Console) {
 }
 ```
 
-# PackageObjectExport
+## PackageObjectExport
 
 Rewrite [dropped feature](https://docs.scala-lang.org/scala3/reference/dropped-features/package-objects.html) package objects
 
@@ -67,13 +67,7 @@ Rewrite [dropped feature](https://docs.scala-lang.org/scala3/reference/dropped-f
 package foo
 package object db extends doobie.syntax.AllSyntax
     with doobie.Aliases
-    with doobie.postgres.free.Types
-    with doobie.postgres.free.Modules
-    with doobie.postgres.free.Instances
-    with doobie.postgres.hi.Modules
-    with doobie.postgres.Instances
-    with doobie.postgres.syntax.ToFragmentOps
-    with doobie.postgres.syntax.ToPostgresMonadErrorOps {
+    with doobie.postgres.free.Types {
   
   def otherUsefulMethod[A](input: String): ConnectioIO[A] = ???
   def otherUsefulMethod2[A](input: Int): ConnectioIO[A] = ???
@@ -89,12 +83,7 @@ package db {
   private object dbImpl extends doobie.syntax.AllSyntax
     with doobie.Aliases
     with doobie.postgres.free.Types
-    with doobie.postgres.free.Modules
-    with doobie.postgres.free.Instances
-    with doobie.postgres.hi.Modules
-    with doobie.postgres.Instances
-    with doobie.postgres.syntax.ToFragmentOps
-    with doobie.postgres.syntax.ToPostgresMonadErrorOps
+
   export dbImpl.*
 }
 ```
