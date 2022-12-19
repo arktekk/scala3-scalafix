@@ -29,7 +29,7 @@ object GivenAndUsingTest {
   }
 }
 class MyClass
-class MyClass2
+class MyClass2 { def myClass: MyClass = ??? }
 object ToImport {
   given myClass: MyClass = ???
   given myClass2: MyClass2 = ???
@@ -49,4 +49,16 @@ object DoNotModifyImport {
 }
 class ClassWithTwoImplicitArgs(i: Int, implicit val keepImplicit: Boolean, s: String)(using ec: scala.concurrent.ExecutionContext)
 class ClassWithImplicitAndGivenArgs(i: Int, implicit val keepImplicit: Boolean, s: String)(using ec: scala.concurrent.ExecutionContext)
+object ObjectWithApply {
+  object inner1 {
+    def apply(s: String)(using myClass2: MyClass2) = ???
+  }
+  object inner2 {
+    def apply(using myClass2: MyClass2): String => String = ???
+  }
+  inner1("")(using new MyClass2)
+  inner2(using new MyClass2)("")
+  def call1(myClass2: MyClass2) = inner1("")(using myClass2)
+  def call2(myClass2: MyClass2) = inner2(using myClass2)("")
+}
 // format: on

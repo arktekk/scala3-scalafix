@@ -39,7 +39,7 @@ object GivenAndUsingTest {
   }
 }
 class MyClass
-class MyClass2
+class MyClass2 { def myClass: MyClass = ??? }
 object ToImport {
   implicit val myClass: MyClass = ???
   given myClass2: MyClass2 = ???
@@ -65,4 +65,16 @@ class ClassWithImplicitAndGivenArgs(i: Int, implicit val keepImplicit: Boolean, 
                                             ^^^^^^^^
   Not allowed to use `using` because it's defined in the next argument block.
 */
+object ObjectWithApply {
+  object inner1 {
+    def apply(s: String)(implicit myClass2: MyClass2) = ???
+  }
+  object inner2 {
+    def apply(implicit myClass2: MyClass2): String => String = ???
+  }
+  inner1("")(new MyClass2)
+  inner2(new MyClass2)("")
+  def call1(myClass2: MyClass2) = inner1("")(myClass2)
+  def call2(myClass2: MyClass2) = inner2(myClass2)("")
+}
 // format: on
