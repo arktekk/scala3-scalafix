@@ -4,7 +4,7 @@ rule = DropModThis
 package fix
 
 // format: off
-class Foo() {
+class DropModThisTest() {
   private[this] def foo(a: Int) = ???
   private[this] val bar = 23
   private val baz = "Untouched"

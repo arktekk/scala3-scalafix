@@ -4,7 +4,7 @@ rule = WildcardInitializer
 package fix
 
 // format: off
-class Foo{
+class FooWildcard{
   var n: Int = _
   var s: String = "untouched"
 }
