@@ -24,14 +24,10 @@ class DropModThis extends SyntacticRule("DropModThis") {
 
   override def fix(implicit doc: SyntacticDocument): Patch = {
     doc.tree.collect {
-      case mod @ Mod.Private(within) =>
-        if (within.is[Term.This])
-          Patch.removeTokens(mod.tokens) + Patch.replaceToken(mod.tokens.head, "private")
-        else Patch.empty
-      case mod @ Mod.Protected(within) =>
-        if (within.is[Term.This])
-          Patch.removeTokens(mod.tokens) + Patch.replaceToken(mod.tokens.head, "protected")
-        else Patch.empty
+      case mod @ Mod.Private(_: Term.This) =>
+        Patch.replaceTree(mod, "private")
+      case mod @ Mod.Protected(_: Term.This) =>
+        Patch.replaceTree(mod, "protected")
     }.asPatch
   }
 }
