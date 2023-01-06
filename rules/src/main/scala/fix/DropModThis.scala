@@ -20,7 +20,7 @@ import scalafix.v1._
 
 import scala.meta._
 
-class DropPrivateThis extends SyntacticRule("DropPrivateThis") {
+class DropModThis extends SyntacticRule("DropModThis") {
 
   override def fix(implicit doc: SyntacticDocument): Patch = {
     doc.tree.collect {

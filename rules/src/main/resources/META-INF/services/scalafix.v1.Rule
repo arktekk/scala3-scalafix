@@ -1,4 +1,4 @@
 fix.SemiAuto
 fix.GivenAndUsing
 fix.PackageObjectExport
-fix.DropPrivateThis
+fix.DropModThis

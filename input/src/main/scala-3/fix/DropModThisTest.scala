@@ -1,5 +1,5 @@
 /*
-rule = DropPrivateThis
+rule = DropModThis
  */
 package fix
 
