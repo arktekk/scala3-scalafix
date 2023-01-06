@@ -85,11 +85,11 @@ jobs:
 
       - name: Make target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        run: mkdir -p rules/target/jvm-2.12 input/target/jvm-2.12 rules/target/jvm-2.13 target/testsAggregate/target target tests/target/target3-jvm-2.13 output/target/jvm-3 output/target/jvm-2.12 input/target/jvm-3 output/target/jvm-2.13 input/target/jvm-2.13 project/target
+        run: mkdir -p rules/target/jvm-2.12 rules/target/jvm-2.13 target/testsAggregate/target target tests/target/target3-jvm-2.13 output/target/jvm-3 input/target/jvm-3 project/target
 
       - name: Compress target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
-        run: tar cf targets.tar rules/target/jvm-2.12 input/target/jvm-2.12 rules/target/jvm-2.13 target/testsAggregate/target target tests/target/target3-jvm-2.13 output/target/jvm-3 output/target/jvm-2.12 input/target/jvm-3 output/target/jvm-2.13 input/target/jvm-2.13 project/target
+        run: tar cf targets.tar rules/target/jvm-2.12 rules/target/jvm-2.13 target/testsAggregate/target target tests/target/target3-jvm-2.13 output/target/jvm-3 input/target/jvm-3 project/target
 
       - name: Upload target directories
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')
