@@ -23,10 +23,15 @@ import scala.meta._
 class DropPrivateThis extends SyntacticRule("DropPrivateThis") {
 
   override def fix(implicit doc: SyntacticDocument): Patch = {
-    doc.tree.collect { case mod @ Mod.Private(within) =>
-      if (within.is[Term.This])
-        Patch.removeTokens(mod.tokens) + Patch.replaceToken(mod.tokens.head, "private")
-      else Patch.empty
+    doc.tree.collect {
+      case mod @ Mod.Private(within) =>
+        if (within.is[Term.This])
+          Patch.removeTokens(mod.tokens) + Patch.replaceToken(mod.tokens.head, "private")
+        else Patch.empty
+      case mod @ Mod.Protected(within) =>
+        if (within.is[Term.This])
+          Patch.removeTokens(mod.tokens) + Patch.replaceToken(mod.tokens.head, "protected")
+        else Patch.empty
     }.asPatch
   }
 }
