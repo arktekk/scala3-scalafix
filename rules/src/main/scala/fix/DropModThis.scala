@@ -16,9 +16,18 @@
 
 package fix
 
-import scalafix.testkit._
-import org.scalatest.FunSuiteLike
+import scalafix.v1._
 
-class RuleSuite extends AbstractSemanticRuleSuite with FunSuiteLike {
-  runAllTests()
+import scala.meta._
+
+class DropModThis extends SyntacticRule("DropModThis") {
+
+  override def fix(implicit doc: SyntacticDocument): Patch = {
+    doc.tree.collect {
+      case mod @ Mod.Private(_: Term.This) =>
+        Patch.replaceTree(mod, "private")
+      case mod @ Mod.Protected(_: Term.This) =>
+        Patch.replaceTree(mod, "protected")
+    }.asPatch
+  }
 }
