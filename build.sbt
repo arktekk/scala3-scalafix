@@ -61,24 +61,24 @@ lazy val input = projectMatrix
   .settings(
     libraryDependencies ++= circeDeps,
     libraryDependencies += doobie,
-    SettingKey[Boolean]("ide-skip-project") := true,
+    SettingKey[Boolean]("ide-skip-project", rank = KeyRanks.Invisible) := true,
     headerSources / excludeFilter := AllPassFilter,
     tlFatalWarnings := false
   )
   .defaultAxes(VirtualAxis.jvm)
-  .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
+  .jvmPlatform(scalaVersions = List(scala3Version))
 
 lazy val output = projectMatrix
   .enablePlugins(NoPublishPlugin)
   .settings(
     libraryDependencies ++= circeDeps,
     libraryDependencies += doobie,
-    SettingKey[Boolean]("ide-skip-project") := true,
+    SettingKey[Boolean]("ide-skip-project", rank = KeyRanks.Invisible) := true,
     headerSources / excludeFilter := AllPassFilter,
     tlFatalWarnings := false
   )
   .defaultAxes(VirtualAxis.jvm)
-  .jvmPlatform(scalaVersions = rulesCrossVersions :+ scala3Version)
+  .jvmPlatform(scalaVersions = List(scala3Version))
 
 lazy val testsAggregate = Project("tests", file("target/testsAggregate"))
   .enablePlugins(NoPublishPlugin)
