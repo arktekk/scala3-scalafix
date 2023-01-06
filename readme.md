@@ -87,3 +87,39 @@ package db {
   export dbImpl.*
 }
 ```
+
+## DropModThis
+
+Rewrite [dropped feature](https://docs.scala-lang.org/scala3/reference/dropped-features/this-qualifier.html) `this` qualifier from `private` and `protected`
+```scala
+//Before
+
+package foo
+class Foo {
+  private[this] val logger = getLogger
+}
+
+//After
+package foo
+class Foo {
+  private val logger = getLogger
+}
+```
+
+
+## WilcardInitializer
+Rewrite [dropped feature](https://docs.scala-lang.org/scala3/reference/dropped-features/wildcard-init.html) `var foo: A = _`
+```scala
+//Before
+
+package foo
+class Foo {
+ var state: Int = _
+}
+
+//After
+package foo
+class Foo {
+  var state: Int = scala.compiletime.uninitialized
+}
+```
