@@ -11,6 +11,7 @@ inThisBuild(
     homepage := Some(url("https://github.com/arktekk/scala3-scalafix")),
     licenses := List(License.Apache2),
     tlBaseVersion := "0.1",
+    startYear := Some(2022),
     developers := List(
       Developer(
         "ingarabr",
