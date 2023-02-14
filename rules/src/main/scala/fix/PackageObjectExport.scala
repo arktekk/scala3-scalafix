@@ -33,10 +33,10 @@ class PackageObjectExport extends SemanticRule("PackageObjectExport") {
           val extendsObject = maybeExtends match {
             case Some((_, extendsTokens)) =>
               val privatePackage =
-                s"""|private object ${newTerm} ${extendsTokens.syntax.trim}
-                    |export ${newTerm}.*
+                s"""|  private object ${newTerm} ${extendsTokens.syntax.trim}
+                    |  export ${newTerm}.*
                     |""".stripMargin
-              Patch.addRight(restTokens.last, "\n\n" + privatePackage)
+              Patch.addLeft(restTokens.last, "\n" + privatePackage)
             case None => Patch.empty
           }
           val packagePatch =
