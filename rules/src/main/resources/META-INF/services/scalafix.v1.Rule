@@ -3,3 +3,4 @@ fix.GivenAndUsing
 fix.PackageObjectExport
 fix.DropModThis
 fix.WildcardInitializer
+fix.ImplicitConversions
