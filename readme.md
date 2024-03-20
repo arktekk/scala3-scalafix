@@ -107,7 +107,7 @@ class Foo {
 ```
 
 
-## WilcardInitializer
+## WildcardInitializer
 Rewrite [dropped feature](https://docs.scala-lang.org/scala3/reference/dropped-features/wildcard-init.html) `var foo: A = _`
 ```scala
 //Before
