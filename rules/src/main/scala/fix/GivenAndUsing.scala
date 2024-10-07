@@ -35,9 +35,9 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
             if (onlyImplicitOrUsingParams(d)) replaceWithGiven(d, "def")
             else APatch.Lint(GivenFunctionWithArgs(d))
           else APatch.Empty
-        ) ++ replaceWithUsing(d.paramss)
+        ) ++ replaceWithUsing(d.paramClauseGroups.flatMap(_.paramClauses).map(_.values))
       case c: Defn.Class =>
-        replaceWithUsing(c.ctor.paramss)
+        replaceWithUsing(c.ctor.paramClauses.map(_.values).toList)
     }
 
     val givenImports = givenAndUsingPass.flatMap(_.collect { case APatch.Given(_, symbol) => symbol.owner }).toSet
@@ -59,7 +59,7 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   }
 
   private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
-    d.paramss.forall(_.forall(_.mods.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
+    d.paramClauseGroups.forall(_.paramClauses.forall(_.mod.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
 
   private def replaceWithUsing(paramss: List[List[Term.Param]])(implicit doc: SemanticDocument): List[APatch] = {
     val usingPatch = paramss.reverse.flatten
@@ -131,9 +131,10 @@ case class GivenFunctionWithArgs(func: Defn.Def) extends Diagnostic {
     """Unable to rewrite to `given` syntax because we found a function with a non implicit argument.""".stripMargin
 
   override def position: Position = {
+    val paramss = func.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values)
     val fromArgs = for {
-      hPos <- func.paramss.headOption.flatMap(_.headOption).map(_.pos)
-      lPos <- func.paramss.lastOption.flatMap(_.lastOption).map(_.pos)
+      hPos <- paramss.headOption.map(_.pos)
+      lPos <- paramss.lastOption.map(_.pos)
     } yield
       if (hPos == lPos) hPos
       else Position.Range(hPos.input, hPos.startLine, hPos.startColumn, lPos.startLine, lPos.endColumn)

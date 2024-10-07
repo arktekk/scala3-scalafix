@@ -46,7 +46,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
           val derivePos =
             caseClass.templ.derives.lastOption
               .orElse(caseClass.templ.inits.lastOption)
-              .orElse(if (caseClass.templ.stats.nonEmpty) Some(caseClass.ctor) else None)
+              .orElse(if (caseClass.templ.body.stats.nonEmpty) Some(caseClass.ctor) else None)
               .getOrElse(caseClass)
           val base = if (caseClass.templ.derives.isEmpty) " derives " else ", "
           val derivePatch = Patch.addRight(derivePos, base ++ toRewrite.map(_._2.derived).mkString(", "))
@@ -72,8 +72,8 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
 case class DerivesCandidate(position: Position, derived: SemiAutoDerived) extends Diagnostic {
   private def extractType(t: Type): String =
     t match {
-      case Type.Apply(typ, _) => typ.syntax
-      case t                  => t.syntax
+      case Type.Apply.After_4_6_0(typ, _) => typ.syntax
+      case t                              => t.syntax
     }
 
   private def toType: String =
