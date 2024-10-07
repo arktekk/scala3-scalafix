@@ -50,7 +50,7 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
         else if (importees.exists(_.is[Importee.GivenAll])) Patch.empty
         else Patch.addLeft(importees.head, "given")
 
-      case ApplyImplicitArgs(symbol, args) if usingRefs.contains(symbol) =>
+      case ApplyImplicitArgs(symbol, args) if usingRefs.contains(symbol) && !args.mod.exists(_.is[Mod.Using]) =>
         args.headOption.map(h => Patch.addLeft(h, "using ")).getOrElse(Patch.empty)
 
     }.asPatch

@@ -61,4 +61,8 @@ object ObjectWithApply {
   def call1(myClass2: MyClass2) = inner1("")(using myClass2)
   def call2(myClass2: MyClass2) = inner2(using myClass2)("")
 }
+object WithExplicitUsing {
+  def test(using i: Int): Int = i
+  test(using 1)
+}
 // format: on
