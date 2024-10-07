@@ -30,14 +30,25 @@ object SemiAutoDerived {
 
   def unapply(o: Defn.Object)(implicit doc: SemanticDocument): Option[List[SemiAutoDerived]] =
     nonEmptyList(o.templ.body.stats.collect {
-      case g @ Defn.GivenAlias.After_4_6_0(_, _, _, typeApply @ Type.Apply.After_4_6_0(_, Type.ArgClause((typeName: Type.Name) :: Nil)), body)
-          if matchingType(o, typeName) && isSemiAuto(body) =>
+      case g @ Defn.GivenAlias.After_4_6_0(
+            _,
+            _,
+            _,
+            typeApply @ Type.Apply.After_4_6_0(_, Type.ArgClause((typeName: Type.Name) :: Nil)),
+            body
+          ) if matchingType(o, typeName) && isSemiAuto(body) =>
         SemiAutoDerived(typeApply.symbol.normalized.value.dropRight(1), g)
-      case v @ Defn.Val(mods, _, Some(applied @ Type.Apply.After_4_6_0(_, Type.ArgClause((typeName: Type.Name) :: Nil))), body)
+      case v @ Defn
+            .Val(mods, _, Some(applied @ Type.Apply.After_4_6_0(_, Type.ArgClause((typeName: Type.Name) :: Nil))), body)
           if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
         SemiAutoDerived(findSymbolFromSignature(v).getOrElse(applied.symbol).normalized.value.dropRight(1), v)
-      case v @ Defn.Def.After_4_6_0(mods, _, _, Some(applied @ Type.Apply.After_4_6_0(_, Type.ArgClause((typeName: Type.Name) :: Nil))), body)
-          if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
+      case v @ Defn.Def.After_4_6_0(
+            mods,
+            _,
+            _,
+            Some(applied @ Type.Apply.After_4_6_0(_, Type.ArgClause((typeName: Type.Name) :: Nil))),
+            body
+          ) if matchingType(o, typeName) && mods.exists(_.is[Mod.Implicit]) && isSemiAuto(body) =>
         SemiAutoDerived(findSymbolFromSignature(v).getOrElse(applied.symbol).normalized.value.dropRight(1), v)
     })
 
