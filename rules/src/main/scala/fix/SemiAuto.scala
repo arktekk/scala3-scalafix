@@ -62,7 +62,7 @@ class SemiAuto(semiAutoConfig: SemiAutoConfig) extends SemanticRule("SemiAuto") 
   }
 
   private def childrenInCompanion(companion: Defn.Object): Int = {
-    companion.templ.children.count {
+    companion.templ.body.children.count {
       case Self(Name.Anonymous(), None) => false
       case _                            => true
     }
