@@ -16,7 +16,7 @@
 
 package fix
 
-import fix.matchers.ApplyImplicitArgs
+import fix.matchers.{ApplyImplicitArgs, ImplicitOrUsingMod}
 import scalafix.lint.LintSeverity
 import scalafix.v1._
 
@@ -59,25 +59,24 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   }
 
   private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
-    d.paramClauseGroups.forall(_.paramClauses.forall(_.mod.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
+    d.paramClauseGroups.forall(_.paramClauses.forall(_.mod.exists {
+      case ImplicitOrUsingMod(_) => true
+      case _                     => false
+    }))
 
   private def replaceWithUsing(paramss: List[List[Term.Param]])(implicit doc: SemanticDocument): List[APatch] = {
     val usingPatch = paramss.reverse.flatten
-      .collectFirst {
-        case p: Term.Param if p.mods.exists(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using]) =>
-          val pp = p.mods
-            .find(_.is[Mod.Implicit])
-            .toList
-            .flatMap(_.tokens)
-            .headOption
+      .collectFirst { case p @ ImplicitOrUsingMod(mod) =>
+        if (mod.is[Mod.Using])
+          APatch.Empty
+        else {
+          val pp = mod.tokens.headOption
             .map(t => Patch.replaceToken(t, "using"))
             .asPatch
           APatch.Using(pp, p.symbol.owner)
+        }
       }
-    val lintPatchers = paramss.flatMap(_.collectFirst {
-      case p: Term.Param if p.mods.exists(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using]) =>
-        p.mods.find(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using])
-    }.toList.flatten) match {
+    val lintPatchers = paramss.flatMap(_.collectFirst { case ImplicitOrUsingMod(mod) => mod }.toList) match {
       case Nil      => List.empty
       case _ :: Nil => List.empty
       case other =>

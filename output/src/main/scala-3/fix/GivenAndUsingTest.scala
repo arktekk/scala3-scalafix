@@ -65,4 +65,9 @@ object WithExplicitUsing {
   def test(using i: Int): Int = i
   test(using 1)
 }
+object WithApplyAfterUsing {
+  given i: Int = 1
+  def test(using i: Int): String => String = s => s
+  test("")
+}
 // format: on
