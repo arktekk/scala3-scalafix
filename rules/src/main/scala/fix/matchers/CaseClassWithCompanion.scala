@@ -21,7 +21,7 @@ import scala.meta._
 object CaseClassWithCompanion {
   def unapply(tree: Tree): Option[(Defn.Class, Defn.Object)] =
     tree match {
-      case c @ Defn.Class(mods, cName, _, _, _) if mods.exists(_.is[Mod.Case]) =>
+      case c @ Defn.Class.After_4_6_0(mods, cName, _, _, _) if mods.exists(_.is[Mod.Case]) =>
         c.parent.flatMap { st =>
           st.children.collectFirst {
             case o @ Defn.Object(_, oName, _) if cName.value == oName.value => c -> o

@@ -16,7 +16,7 @@
 
 package fix
 
-import fix.matchers.ApplyImplicitArgs
+import fix.matchers.{ApplyImplicitArgs, ImplicitOrUsingMod}
 import scalafix.lint.LintSeverity
 import scalafix.v1._
 
@@ -35,9 +35,9 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
             if (onlyImplicitOrUsingParams(d)) replaceWithGiven(d, "def")
             else APatch.Lint(GivenFunctionWithArgs(d))
           else APatch.Empty
-        ) ++ replaceWithUsing(d.paramss)
+        ) ++ replaceWithUsing(d.paramClauseGroups.flatMap(_.paramClauses).map(_.values))
       case c: Defn.Class =>
-        replaceWithUsing(c.ctor.paramss)
+        replaceWithUsing(c.ctor.paramClauses.map(_.values).toList)
     }
 
     val givenImports = givenAndUsingPass.flatMap(_.collect { case APatch.Given(_, symbol) => symbol.owner }).toSet
@@ -50,7 +50,7 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
         else if (importees.exists(_.is[Importee.GivenAll])) Patch.empty
         else Patch.addLeft(importees.head, "given")
 
-      case ApplyImplicitArgs(symbol, args) if usingRefs.contains(symbol) =>
+      case ApplyImplicitArgs(symbol, args) if usingRefs.contains(symbol) && !args.mod.exists(_.is[Mod.Using]) =>
         args.headOption.map(h => Patch.addLeft(h, "using ")).getOrElse(Patch.empty)
 
     }.asPatch
@@ -59,25 +59,24 @@ class GivenAndUsing extends SemanticRule("GivenAndUsing") {
   }
 
   private def onlyImplicitOrUsingParams(d: Defn.Def): Boolean =
-    d.paramss.forall(_.forall(_.mods.exists(m => m.is[Mod.Implicit] || m.is[Mod.Using])))
+    d.paramClauseGroups.forall(_.paramClauses.forall(_.mod.exists {
+      case ImplicitOrUsingMod(_) => true
+      case _                     => false
+    }))
 
   private def replaceWithUsing(paramss: List[List[Term.Param]])(implicit doc: SemanticDocument): List[APatch] = {
     val usingPatch = paramss.reverse.flatten
-      .collectFirst {
-        case p: Term.Param if p.mods.exists(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using]) =>
-          val pp = p.mods
-            .find(_.is[Mod.Implicit])
-            .toList
-            .flatMap(_.tokens)
-            .headOption
+      .collectFirst { case p @ ImplicitOrUsingMod(mod) =>
+        if (mod.is[Mod.Using])
+          APatch.Empty
+        else {
+          val pp = mod.tokens.headOption
             .map(t => Patch.replaceToken(t, "using"))
             .asPatch
           APatch.Using(pp, p.symbol.owner)
+        }
       }
-    val lintPatchers = paramss.flatMap(_.collectFirst {
-      case p: Term.Param if p.mods.exists(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using]) =>
-        p.mods.find(mod => mod.is[Mod.Implicit] || mod.is[Mod.Using])
-    }.toList.flatten) match {
+    val lintPatchers = paramss.flatMap(_.collectFirst { case ImplicitOrUsingMod(mod) => mod }.toList) match {
       case Nil      => List.empty
       case _ :: Nil => List.empty
       case other =>
@@ -131,9 +130,10 @@ case class GivenFunctionWithArgs(func: Defn.Def) extends Diagnostic {
     """Unable to rewrite to `given` syntax because we found a function with a non implicit argument.""".stripMargin
 
   override def position: Position = {
+    val paramss = func.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values)
     val fromArgs = for {
-      hPos <- func.paramss.headOption.flatMap(_.headOption).map(_.pos)
-      lPos <- func.paramss.lastOption.flatMap(_.lastOption).map(_.pos)
+      hPos <- paramss.headOption.map(_.pos)
+      lPos <- paramss.lastOption.map(_.pos)
     } yield
       if (hPos == lPos) hPos
       else Position.Range(hPos.input, hPos.startLine, hPos.startColumn, lPos.startLine, lPos.endColumn)

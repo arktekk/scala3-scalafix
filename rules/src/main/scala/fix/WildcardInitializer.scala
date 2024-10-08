@@ -22,7 +22,7 @@ import scala.meta._
 class WildcardInitializer extends SemanticRule("WildcardInitializer") {
 
   override def fix(implicit doc: SemanticDocument): Patch = {
-    doc.tree.collect { case defn @ Defn.Var(_, _, _, None) =>
+    doc.tree.collect { case defn @ Defn.Var.After_4_7_2(_, _, _, Term.Placeholder()) =>
       defn.tokens.splitOn(_.is[Token.Equals]) match {
         case Some((_, rest)) =>
           Patch.removeTokens(rest.tail) + Patch.addRight(rest.head, " scala.compiletime.uninitialized")

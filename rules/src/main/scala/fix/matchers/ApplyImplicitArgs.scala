@@ -23,14 +23,14 @@ import scalafix.v1._
 object ApplyImplicitArgs {
 
   @tailrec
-  private def applyTermChain(term: Term, args: List[List[Term]]): List[List[Term]] = {
+  private def applyTermChain(term: Term, args: List[Term.ArgClause]): List[Term.ArgClause] = {
     term match {
-      case t: Term.Apply => applyTermChain(t.fun, t.args :: args)
+      case t: Term.Apply => applyTermChain(t.fun, t.argClause :: args)
       case _             => args
     }
   }
 
-  def unapply(tree: Tree)(implicit doc: SemanticDocument): Option[(Symbol, List[Term])] =
+  def unapply(tree: Tree)(implicit doc: SemanticDocument): Option[(Symbol, Term.ArgClause)] =
     tree match {
       case term: Term.Apply =>
         term.symbol.info

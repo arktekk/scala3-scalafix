@@ -1,7 +1,7 @@
 lazy val V = _root_.scalafix.sbt.BuildInfo
 
 lazy val rulesCrossVersions = Seq(V.scala213, V.scala212)
-lazy val scala3Version = "3.2.1"
+lazy val scala3Version = "3.3.4"
 
 inThisBuild(
   List(
@@ -26,7 +26,7 @@ inThisBuild(
         url("https://github.com/hamnis")
       )
     ),
-    tlSonatypeUseLegacyHost := true,
+    sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeLegacy,
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision
   )
@@ -35,9 +35,9 @@ inThisBuild(
 val circeDeps = List(
   "io.circe" %% "circe-generic",
   "io.circe" %% "circe-core"
-).map(_ % "0.14.2")
+).map(_ % "0.14.10")
 
-val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC2"
+val doobie = "org.tpolecat" %% "doobie-core" % "1.0.0-RC6"
 
 lazy val `scala3-scalafix-root` = (project in file("."))
   .enablePlugins(NoPublishPlugin)

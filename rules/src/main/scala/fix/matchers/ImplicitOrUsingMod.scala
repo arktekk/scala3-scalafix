@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package fix
+package fix.matchers
 
-import scalafix.testkit._
-import org.scalatest.funsuite.AnyFunSuiteLike
+import scala.meta._
 
-class RuleSuite extends AbstractSemanticRuleSuite with AnyFunSuiteLike {
-  runAllTests()
+object ImplicitOrUsingMod {
+  def unapply(mod: Mod): Option[Mod] =
+    if (mod.is[Mod.Implicit] || mod.is[Mod.Using]) Some(mod) else None
+
+  def unapply(param: Term.Param): Option[Mod] =
+    param.mods.collectFirst { case ImplicitOrUsingMod(mod) => mod }
 }
